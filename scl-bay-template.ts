@@ -309,12 +309,13 @@ export default class SclBayTemplate extends LitElement {
     return html`<div class="container allfunc">
       ${root.getAttribute('name')}
       <nav>
-        <abbr title="Import from Function Specification">
+        <span title="Import from Function Specification">
           <mwc-icon-button
+            disabled
             icon="copy_all"
             @click="${() => this.fsdInput.click()}"
           ></mwc-icon-button>
-        </abbr>
+        </span>
         <input
           id="funcinput"
           style="display:none;"
@@ -326,21 +327,23 @@ export default class SclBayTemplate extends LitElement {
           }}
           @change=${this.importFunction}
         />
-        <abbr title="Create New Function/EqFunction">
+        <span title="Create New Function/EqFunction">
           <mwc-icon-button
+            disabled
             icon="functions"
             @click="${() => this.addFunction()}"
           ></mwc-icon-button>
-        </abbr>
+        </span>
         ${root.tagName === 'ConductingEquipment' ||
         root.tagName === 'PowerTransformer' ||
         root.tagName === 'TransformerWinding'
-          ? html` <abbr title="Create New SubEquipment">
+          ? html` <span title="Create New SubEquipment">
               <mwc-icon-button
+                disabled
                 icon="subdirectory_arrow_right"
                 @click="${() => this.openCreateWizard('SubEquipment')}"
               ></mwc-icon-button>
-            </abbr>`
+            </span>`
           : nothing}
       </nav>
       ${Array.from(root.querySelectorAll(selector)).map(
@@ -413,13 +416,13 @@ export default class SclBayTemplate extends LitElement {
     return html`<main>
         <div style="margin:10px;width:${this.sldWidth}px">
           <div>
-            <abbr title="Resize SLD"
+            <span title="Resize SLD"
               ><mwc-icon-button
                 icon="resize"
                 style="--mdc-icon-button-size:48px;"
                 @click="${() => this.sldWidthDiag?.show()}"
               ></mwc-icon-button
-            ></abbr>
+            ></span>
           </div>
           <sld-viewer
             .substation=${this.substation}

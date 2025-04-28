@@ -19,15 +19,15 @@ import type { TextField } from '@material/mwc-textfield';
 
 import { newEditEvent } from '@openscd/open-scd-core';
 
-import '@openenergytools/function-editor-90-30';
-
 import { createElement } from '@openenergytools/scl-lib/dist/foundation/utils.js';
 
 import { getReference, importLNodeType } from '@openenergytools/scl-lib';
 
 import { newCreateWizardEvent } from './foundation.js';
+import { resizePath } from './foundation/sldIcons.js';
 
 import './sld-viewer.js';
+import './function-editor.js';
 
 export const xmlnsNs = 'http://www.w3.org/2000/xmlns/';
 
@@ -418,11 +418,20 @@ export default class SclBayTemplate extends LitElement {
           <div>
             <span title="Resize SLD"
               ><mwc-icon-button
-                icon="resize"
                 style="--mdc-icon-button-size:48px;"
                 @click="${() => this.sldWidthDiag?.show()}"
-              ></mwc-icon-button
-            ></span>
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 96 960 960"
+                  opacity="0.83"
+                >
+                  ${resizePath}
+                </svg>
+              </mwc-icon-button></span
+            >
           </div>
           <sld-viewer
             .substation=${this.substation}
@@ -478,6 +487,7 @@ export default class SclBayTemplate extends LitElement {
       width: 100%;
       height: 100%;
       display: flex;
+      --mdc-theme-text-disabled-on-light: rgba(0, 0, 0, 0.38);
     }
 
     sld-viewer {

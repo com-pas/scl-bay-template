@@ -1,0 +1,47 @@
+import { LitElement, TemplateResult } from 'lit';
+import '@material/mwc-dialog';
+import '@material/mwc-button';
+import '@material/mwc-icon-button';
+import '@material/mwc-icon';
+import '@material/mwc-select';
+import '@material/mwc-textfield';
+import type { Dialog } from '@material/mwc-dialog';
+import type { TextField } from '@material/mwc-textfield';
+import './sld-viewer.js';
+import './function-editor.js';
+export declare const xmlnsNs = "http://www.w3.org/2000/xmlns/";
+export declare const ns6100 = "http://www.iec.ch/61850/2019/SCL/6-100";
+export declare const pref6100 = "eTr_6-100";
+export default class SclBayTemplate extends LitElement {
+    doc?: XMLDocument;
+    docs: Record<string, XMLDocument>;
+    lNodeTypeSrc: {
+        name: string;
+        src: XMLDocument;
+    }[];
+    get substation(): Element | null;
+    gridSize: number;
+    editCount: number;
+    get bay(): Element | null;
+    parent?: Element;
+    selectedFunc?: Element;
+    sldWidth: number;
+    serviceSelector: HTMLSelectElement;
+    fsdInput: HTMLInputElement;
+    proResNameSel: HTMLSelectElement;
+    proResName: TextField;
+    proResSelector: TextField;
+    proResCardinality: TextField;
+    proResMax: TextField;
+    proResService: TextField;
+    sldWidthDiag?: Dialog;
+    private openCreateWizard;
+    addFunction(): void;
+    addSubFunction(parent: Element): void;
+    subFunction(subFunc: Element): Element;
+    importFunction(event: Event): Promise<void>;
+    private renderFuncContainers;
+    private renderWidthDialog;
+    render(): TemplateResult<1>;
+    static styles: import("lit").CSSResult;
+}

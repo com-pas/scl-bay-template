@@ -19,15 +19,15 @@ import type { TextField } from '@material/mwc-textfield';
 
 import { newEditEvent } from '@openscd/open-scd-core';
 
-import '@openenergytools/function-editor-90-30';
-
 import { createElement } from '@openenergytools/scl-lib/dist/foundation/utils.js';
 
 import { getReference, importLNodeType } from '@openenergytools/scl-lib';
 
 import { newCreateWizardEvent } from './foundation.js';
+import { resizePath } from './foundation/sldIcons.js';
 
 import './sld-viewer.js';
+import './function-editor.js';
 
 export const xmlnsNs = 'http://www.w3.org/2000/xmlns/';
 
@@ -309,12 +309,13 @@ export default class SclBayTemplate extends LitElement {
     return html`<div class="container allfunc">
       ${root.getAttribute('name')}
       <nav>
-        <abbr title="Import from Function Specification">
+        <span title="Import from Function Specification">
           <mwc-icon-button
+            disabled
             icon="copy_all"
             @click="${() => this.fsdInput.click()}"
           ></mwc-icon-button>
-        </abbr>
+        </span>
         <input
           id="funcinput"
           style="display:none;"
@@ -326,21 +327,23 @@ export default class SclBayTemplate extends LitElement {
           }}
           @change=${this.importFunction}
         />
-        <abbr title="Create New Function/EqFunction">
+        <span title="Create New Function/EqFunction">
           <mwc-icon-button
+            disabled
             icon="functions"
             @click="${() => this.addFunction()}"
           ></mwc-icon-button>
-        </abbr>
+        </span>
         ${root.tagName === 'ConductingEquipment' ||
         root.tagName === 'PowerTransformer' ||
         root.tagName === 'TransformerWinding'
-          ? html` <abbr title="Create New SubEquipment">
+          ? html` <span title="Create New SubEquipment">
               <mwc-icon-button
+                disabled
                 icon="subdirectory_arrow_right"
                 @click="${() => this.openCreateWizard('SubEquipment')}"
               ></mwc-icon-button>
-            </abbr>`
+            </span>`
           : nothing}
       </nav>
       ${Array.from(root.querySelectorAll(selector)).map(
@@ -413,15 +416,24 @@ export default class SclBayTemplate extends LitElement {
     return html`<main>
         <div style="margin:10px;width:${this.sldWidth}px">
           <div>
-            <abbr title="Resize SLD"
+            <span title="Resize SLD"
               ><mwc-icon-button
-                icon="resize"
                 style="--mdc-icon-button-size:48px;"
                 @click="${() => this.sldWidthDiag?.show()}"
-              ></mwc-icon-button
-            ></abbr>
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 96 960 960"
+                  opacity="0.83"
+                >
+                  ${resizePath}
+                </svg>
+              </mwc-icon-button></span
+            >
           </div>
-          <sld-viewer
+          <compas-sld-viewer-9f3b7c1d
             .substation=${this.substation}
             .gridSize=${this.gridSize}
             .parent=${this.parent}
@@ -431,17 +443,17 @@ export default class SclBayTemplate extends LitElement {
               this.parent = evt.detail.element;
               this.selectedFunc = undefined;
             }}"
-          ></sld-viewer>
+          ></compas-sld-viewer-9f3b7c1d>
         </div>
         <div style="width:100%;overflow-y:scroll;">
           <div style="flex:auto;display:flex; height:100%">
             ${this.renderFuncContainers()}
-            <function-editor-90-30
+            <compas-function-editor-a1b2c3d4
               style="flex:auto;"
               .doc="${this.doc}"
               editCount="${this.editCount}"
               .function="${this.selectedFunc}"
-            ></function-editor-90-30>
+            ></compas-function-editor-a1b2c3d4>
           </div>
         </div>
       </main>
@@ -475,6 +487,7 @@ export default class SclBayTemplate extends LitElement {
       width: 100%;
       height: 100%;
       display: flex;
+      --mdc-theme-text-disabled-on-light: rgba(0, 0, 0, 0.38);
     }
 
     sld-viewer {

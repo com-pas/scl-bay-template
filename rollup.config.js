@@ -12,7 +12,7 @@ export default {
     // preserveModules: true,  // Keep directory structure and files
   },
   preserveEntrySignatures: 'strict', // leaves export of the plugin entry point
-
+  context: 'window',
   plugins: [
     /** Resolve bare module imports */
     nodeResolve(),

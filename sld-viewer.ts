@@ -4,7 +4,7 @@ import { customElement, property, query } from 'lit/decorators.js';
 import { attributes, svgNs, xlinkNs } from './foundation/sldUtil.js';
 import { sldSvg } from './foundation/sldSvg.js';
 
-@customElement('sld-viewer')
+@customElement('compas-sld-viewer-9f3b7c1d')
 export class SldViewer extends LitElement {
   @property({ attribute: false })
   substation!: Element;

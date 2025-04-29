@@ -721,7 +721,7 @@ function extRefAddress(extRef: Element, sourceRef: Element): string {
   return `${iedName}/${ldInst}/${prefix ?? ''}${lnClass}${lnInst}/${intAddr}`;
 }
 
-@customElement('function-editor-90-30')
+@customElement('compas-function-editor-a1b2c3d4')
 export default class FunctionEditor9030 extends LitElement {
   @property({ attribute: false })
   function!: Element;
@@ -1698,6 +1698,7 @@ export default class FunctionEditor9030 extends LitElement {
         >
         </mwc-icon-button>
         <mwc-icon-button
+          disabled
           @click="${() => {
             this.openLNodeDialog(subFunc);
           }}"
@@ -1745,6 +1746,7 @@ export default class FunctionEditor9030 extends LitElement {
           >
           </mwc-icon-button>
           <mwc-icon-button
+            disabled
             @click="${() => this.openLNodeDialog(this.function!)}"
           >
             <svg

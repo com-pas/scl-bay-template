@@ -433,7 +433,7 @@ export default class SclBayTemplate extends LitElement {
               </mwc-icon-button></span
             >
           </div>
-          <sld-viewer
+          <compas-sld-viewer-9f3b7c1d
             .substation=${this.substation}
             .gridSize=${this.gridSize}
             .parent=${this.parent}
@@ -443,17 +443,17 @@ export default class SclBayTemplate extends LitElement {
               this.parent = evt.detail.element;
               this.selectedFunc = undefined;
             }}"
-          ></sld-viewer>
+          ></compas-sld-viewer-9f3b7c1d>
         </div>
         <div style="width:100%;overflow-y:scroll;">
           <div style="flex:auto;display:flex; height:100%">
             ${this.renderFuncContainers()}
-            <function-editor-90-30
+            <compas-function-editor-a1b2c3d4
               style="flex:auto;"
               .doc="${this.doc}"
               editCount="${this.editCount}"
               .function="${this.selectedFunc}"
-            ></function-editor-90-30>
+            ></compas-function-editor-a1b2c3d4>
           </div>
         </div>
       </main>

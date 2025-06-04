@@ -51,9 +51,6 @@ import {
 } from './foundation/dataAttributePicker.js';
 import { newCreateWizardEvent, newEditWizardEvent } from './foundation.js';
 
-let LIBDOC: XMLDocument;
-let LIBDOCNAME: string;
-
 const uri6100 = 'http://www.iec.ch/61850/2019/SCL/6-100';
 const xmlnsNs = 'http://www.w3.org/2000/xmlns/';
 const prefix6100 = 'eTr_6-100';
@@ -729,14 +726,17 @@ export default class FunctionEditor9030 extends LitElement {
   @property()
   docs: Record<string, XMLDocument> = {};
 
+  @property()
+  libDoc?: XMLDocument;
+
+  @property({ type: Number })
+  editCount = -1;
+
   @state()
   lNodeTypeSrc: { name: string; src: XMLDocument }[] = [];
 
   @state()
   gridSize = 32;
-
-  @property({ type: Number })
-  editCount = -1;
 
   @state()
   parent?: Element;
@@ -781,6 +781,9 @@ export default class FunctionEditor9030 extends LitElement {
 
   @state()
   lNodeDetail: 'inputs' | 'outputs' | 'settings' = 'inputs';
+
+  @state()
+  userLibDoc?: XMLDocument;
 
   items: SelectItem[] = [];
 
@@ -859,7 +862,9 @@ export default class FunctionEditor9030 extends LitElement {
   createNewLNodeElements(): void {
     if (!this.lnodeparent) return;
 
-    const selectedLNs = this.lnList.selectedElements;
+    const selectedLNs = this.lnList.selectedElements ?? [];
+
+    if (selectedLNs.length === 0) return;
 
     const edits = selectedLNs.flatMap(ln =>
       createSingleLNode(this.lnodeparent!, ln)
@@ -994,13 +999,36 @@ export default class FunctionEditor9030 extends LitElement {
     if (!file) return;
 
     const text = await file.text();
-    const docName = file.name;
     const doc = new DOMParser().parseFromString(text, 'application/xml');
 
-    LIBDOCNAME = docName;
-    LIBDOC = doc;
-
+    this.userLibDoc = doc;
     this.requestUpdate();
+  }
+
+  async resetSelectionList(): Promise<void> {
+    // Force a full re-render of the selection-list to ensure all checkboxes are visually deselected/reset.
+    // Directly updating `items` wasn't triggering checkbox state updates.
+    // This workaround clears the list first, waits for the DOM to update, then reassigns the deselected items.
+    const deselectedItems = this.lnList.items.map(item => ({
+      ...item,
+      selected: false,
+    }));
+
+    // Clear search input manually via shadow DOM access.
+    // This simulates user clearing the search field and triggers filtering.
+    const searchField = this.lnList.renderRoot.querySelector(
+      'md-outlined-text-field'
+    );
+    if (searchField) {
+      searchField.value = '';
+      searchField.dispatchEvent(
+        new Event('input', { bubbles: true, composed: true })
+      );
+    }
+    this.lnList.items = [];
+    await this.lnList.updateComplete;
+
+    this.lnList.items = deselectedItems;
   }
 
   updated(changedProperties: Map<string, any>) {
@@ -1236,7 +1264,7 @@ export default class FunctionEditor9030 extends LitElement {
 
   // eslint-disable-next-line class-methods-use-this
   private renderLibraryImport(): TemplateResult {
-    return html` <h3>${LIBDOCNAME ?? 'No LNodeType library loaded, yet!'}</h3>
+    return html` <h3>No LNodeType library loaded, yet!</h3>
       <input
         style="display:none;"
         @click=${({ target }: MouseEvent) => {
@@ -1255,28 +1283,29 @@ export default class FunctionEditor9030 extends LitElement {
   }
 
   private renderLNodeTypePicker(): TemplateResult {
-    let root: XMLDocument | undefined;
-    if (!LIBDOC) root = this.function.ownerDocument;
-    else root = LIBDOC;
+    const _libDoc = this.libDoc ?? this.userLibDoc;
 
-    const items =
-      this.items.length === 0
-        ? Array.from(
-            root?.querySelectorAll(':root > DataTypeTemplates > LNodeType') ??
-              []
-          ).map(lNodeType => ({
-            headline: lNodeType.getAttribute('lnClass') ?? 'UNKNOWN',
-            supportingText: `${lNodeType.getAttribute(
-              'desc'
-            )} - #${lNodeType.getAttribute('id')}`,
-            attachedElement: lNodeType,
-            selected: false,
-          }))
-        : this.items;
+    const lNodeTypes = _libDoc
+      ? Array.from(
+          _libDoc.querySelectorAll(':root > DataTypeTemplates > LNodeType')
+        )
+      : [];
+
+    const items = lNodeTypes.map(lNodeType => ({
+      headline: lNodeType.getAttribute('lnClass') ?? 'UNKNOWN',
+      supportingText: `${
+        lNodeType.getAttribute('desc') ?? ''
+      } - #${lNodeType.getAttribute('id')}`,
+      attachedElement: lNodeType,
+      selected: false,
+    }));
 
     const importLib = items.length === 0 ? this.renderLibraryImport() : nothing;
 
-    return html`<mwc-dialog id="lnode-dialog">
+    return html`<mwc-dialog
+      id="lnode-dialog"
+      @closed=${() => this.resetSelectionList()}
+    >
       <div id="createLNodeWizardContent">
         <selection-list id="lnlist" filterable .items=${items}></selection-list>
         ${importLib}
@@ -1291,7 +1320,7 @@ export default class FunctionEditor9030 extends LitElement {
       >
         Save
       </mwc-button>
-    </mwc-dialog> `;
+    </mwc-dialog>`;
   }
 
   private renderLNodeDetailContent(): TemplateResult {
@@ -1698,7 +1727,6 @@ export default class FunctionEditor9030 extends LitElement {
         >
         </mwc-icon-button>
         <mwc-icon-button
-          disabled
           @click="${() => {
             this.openLNodeDialog(subFunc);
           }}"
@@ -1746,7 +1774,6 @@ export default class FunctionEditor9030 extends LitElement {
           >
           </mwc-icon-button>
           <mwc-icon-button
-            disabled
             @click="${() => this.openLNodeDialog(this.function!)}"
           >
             <svg

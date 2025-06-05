@@ -35,7 +35,7 @@ export const ns6100 = 'http://www.iec.ch/61850/2019/SCL/6-100';
 
 export const pref6100 = 'eTr_6-100';
 
-let LIBDOC: XMLDocument | undefined | null = null;
+let LNODELIB: XMLDocument | undefined | null = null;
 
 function funcPath(func: Element, path: string[]): string {
   if (!func.parentElement || func.parentElement.tagName === 'SCL') {
@@ -203,15 +203,20 @@ export default class SclBayTemplate extends LitElement {
 
   @query('#sldWidthDialog') sldWidthDiag?: Dialog;
 
-  @query('#libdoc-info') libDocInfoDialog?: Dialog;
+  @query('#lnode-lib-info') lnodeLibDialog?: Dialog;
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.requestLNodeLibrary();
+  }
 
   private openCreateWizard(tagName: string): void {
     if (this.parent)
       this.dispatchEvent(newCreateWizardEvent(this.parent, tagName));
   }
 
-  private async onRequestLibDocClick() {
-    const libDoc = await new Promise<XMLDocument | undefined>(resolve => {
+  private async requestLNodeLibrary() {
+    const lNodeLib = await new Promise<XMLDocument | undefined>(resolve => {
       this.dispatchEvent(
         new CustomEvent('request-libdoc', {
           detail: { callback: resolve },
@@ -220,7 +225,7 @@ export default class SclBayTemplate extends LitElement {
         })
       );
     });
-    if (libDoc) LIBDOC = libDoc;
+    if (lNodeLib) LNODELIB = lNodeLib;
     this.requestUpdate();
   }
 
@@ -450,15 +455,15 @@ export default class SclBayTemplate extends LitElement {
   }
 
   private openLibDocInfoDialog() {
-    this.libDocInfoDialog?.show();
+    this.lnodeLibDialog?.show();
   }
 
   private closeLibDocInfoDialog() {
-    this.libDocInfoDialog?.close();
+    this.lnodeLibDialog?.close();
   }
 
   private renderLibDocInfoDialog(): TemplateResult {
-    const { fileName, version, lastUpdated } = getLibDocInfo(LIBDOC);
+    const { fileName, version, lastUpdated } = getLibDocInfo(LNODELIB);
 
     let formattedDate = lastUpdated;
     if (lastUpdated) {
@@ -473,12 +478,14 @@ export default class SclBayTemplate extends LitElement {
     }
     return html`
       <mwc-dialog
-        id="libdoc-info"
-        heading="LibDoc Info"
+        id="lnode-lib-info"
+        heading="LNodeType Library Info"
         @closed=${this.closeLibDocInfoDialog}
       >
         <div>
-          <div><b>File name:</b> ${fileName || 'No LibDoc loaded'}</div>
+          <div>
+            <b>File name:</b> ${fileName || 'No LNodeType Library loaded'}
+          </div>
           <div><b>Version:</b> ${version}</div>
           <div><b>Last update:</b> ${formattedDate}</div>
         </div>
@@ -492,11 +499,6 @@ export default class SclBayTemplate extends LitElement {
 
     return html`<main>
       <div class="btn-group">
-        <mwc-button
-          icon=${LIBDOC ? 'check' : 'upload_file'}
-          label=${LIBDOC ? 'Libdoc loaded' : 'Load Libdoc'}
-          @click=${() => this.onRequestLibDocClick()}
-          ></mwc-button>
         <mwc-icon-button
           icon="info"
           @click="${() => this.openLibDocInfoDialog()}"
@@ -543,7 +545,7 @@ export default class SclBayTemplate extends LitElement {
               .doc="${this.doc}"
               editCount="${this.editCount}"
               .function="${this.selectedFunc}"
-              .libDoc="${LIBDOC}"
+              .lNodeLib="${LNODELIB}"
             ></compas-function-editor-a1b2c3d4>
           </div>
         </div>

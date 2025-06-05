@@ -727,7 +727,7 @@ export default class FunctionEditor9030 extends LitElement {
   docs: Record<string, XMLDocument> = {};
 
   @property()
-  libDoc?: XMLDocument;
+  lNodeLib?: XMLDocument;
 
   @property({ type: Number })
   editCount = -1;
@@ -781,9 +781,6 @@ export default class FunctionEditor9030 extends LitElement {
 
   @state()
   lNodeDetail: 'inputs' | 'outputs' | 'settings' = 'inputs';
-
-  @state()
-  userLibDoc?: XMLDocument;
 
   items: SelectItem[] = [];
 
@@ -992,17 +989,6 @@ export default class FunctionEditor9030 extends LitElement {
     this.dispatchEvent(
       newEditEvent([...sourceRefEdits, ...processResourceEdits])
     );
-  }
-
-  async openDoc(event: Event): Promise<void> {
-    const file = (<HTMLInputElement | null>event.target)?.files?.item(0);
-    if (!file) return;
-
-    const text = await file.text();
-    const doc = new DOMParser().parseFromString(text, 'application/xml');
-
-    this.userLibDoc = doc;
-    this.requestUpdate();
   }
 
   async resetSelectionList(): Promise<void> {
@@ -1262,32 +1248,12 @@ export default class FunctionEditor9030 extends LitElement {
     </mwc-dialog> `;
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  private renderLibraryImport(): TemplateResult {
-    return html` <h3>No LNodeType library loaded, yet!</h3>
-      <input
-        style="display:none;"
-        @click=${({ target }: MouseEvent) => {
-          // eslint-disable-next-line no-param-reassign
-          (<HTMLInputElement>target).value = '';
-        }}
-        @change=${this.openDoc}
-        type="file"
-      />
-      <mwc-button
-        label="Import LNodeType Library"
-        @click="${() => this.libInput.click()}"
-        style="height:30px;margin:10px"
-      >
-      </mwc-button>`;
-  }
-
   private renderLNodeTypePicker(): TemplateResult {
-    const _libDoc = this.libDoc ?? this.userLibDoc;
-
-    const lNodeTypes = _libDoc
+    const lNodeTypes = this.lNodeLib
       ? Array.from(
-          _libDoc.querySelectorAll(':root > DataTypeTemplates > LNodeType')
+          this.lNodeLib.querySelectorAll(
+            ':root > DataTypeTemplates > LNodeType'
+          )
         )
       : [];
 
@@ -1300,15 +1266,18 @@ export default class FunctionEditor9030 extends LitElement {
       selected: false,
     }));
 
-    const importLib = items.length === 0 ? this.renderLibraryImport() : nothing;
-
     return html`<mwc-dialog
       id="lnode-dialog"
       @closed=${() => this.resetSelectionList()}
     >
       <div id="createLNodeWizardContent">
-        <selection-list id="lnlist" filterable .items=${items}></selection-list>
-        ${importLib}
+        ${!this.lNodeLib
+          ? html`<p>No LNodeType library loaded.</p>`
+          : html` <selection-list
+              id="lnlist"
+              filterable
+              .items=${items}
+            ></selection-list>`}
       </div>
       <mwc-button slot="secondaryAction" dialogAction="close">
         Cancel
@@ -1317,6 +1286,7 @@ export default class FunctionEditor9030 extends LitElement {
         slot="primaryAction"
         dialogAction="close"
         @click="${() => this.createNewLNodeElements()}"
+        ?disabled=${!this.lNodeLib}
       >
         Save
       </mwc-button>

@@ -23,7 +23,7 @@ import { createElement } from '@openenergytools/scl-lib/dist/foundation/utils.js
 
 import { getReference, importLNodeType } from '@openenergytools/scl-lib';
 
-import { newCreateWizardEvent } from './foundation.js';
+import { newCreateWizardEvent, buildLibDocName } from './foundation.js';
 import { resizePath } from './foundation/sldIcons.js';
 
 import './sld-viewer.js';
@@ -34,6 +34,8 @@ export const xmlnsNs = 'http://www.w3.org/2000/xmlns/';
 export const ns6100 = 'http://www.iec.ch/61850/2019/SCL/6-100';
 
 export const pref6100 = 'eTr_6-100';
+
+let LNODELIB: XMLDocument | undefined | null = null;
 
 function funcPath(func: Element, path: string[]): string {
   if (!func.parentElement || func.parentElement.tagName === 'SCL') {
@@ -125,6 +127,27 @@ function updateFuncClone(func: Element, newParent: Element): Element {
   return funcClone;
 }
 
+function getLibDocInfo(libDoc: XMLDocument | undefined | null) {
+  if (!libDoc) return { fileName: '', version: '', lastUpdated: '' };
+
+  const header = libDoc.querySelector(':root > Header');
+  const fileName = buildLibDocName(libDoc.documentElement);
+  const version = header?.getAttribute('version') ?? '';
+
+  let lastUpdated = '';
+  if (header) {
+    const history = header.querySelector('History');
+    if (history && version) {
+      const hitem = Array.from(history.querySelectorAll('Hitem')).find(
+        h => h.getAttribute('version') === version
+      );
+      lastUpdated = hitem?.getAttribute('when') ?? '';
+    }
+  }
+
+  return { fileName, version, lastUpdated };
+}
+
 export default class SclBayTemplate extends LitElement {
   @property({ attribute: false })
   doc?: XMLDocument;
@@ -132,8 +155,8 @@ export default class SclBayTemplate extends LitElement {
   @property()
   docs: Record<string, XMLDocument> = {};
 
-  @state()
-  lNodeTypeSrc: { name: string; src: XMLDocument }[] = [];
+  @property({ type: Number })
+  editCount = -1;
 
   @property({ attribute: false })
   get substation(): Element | null {
@@ -141,10 +164,10 @@ export default class SclBayTemplate extends LitElement {
   }
 
   @state()
-  gridSize = 32;
+  lNodeTypeSrc: { name: string; src: XMLDocument }[] = [];
 
-  @property({ type: Number })
-  editCount = -1;
+  @state()
+  gridSize = 32;
 
   @state()
   get bay(): Element | null {
@@ -180,9 +203,30 @@ export default class SclBayTemplate extends LitElement {
 
   @query('#sldWidthDialog') sldWidthDiag?: Dialog;
 
+  @query('#lnode-lib-info') lnodeLibDialog?: Dialog;
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.requestLNodeLibrary();
+  }
+
   private openCreateWizard(tagName: string): void {
     if (this.parent)
       this.dispatchEvent(newCreateWizardEvent(this.parent, tagName));
+  }
+
+  private async requestLNodeLibrary() {
+    const lNodeLib = await new Promise<XMLDocument | undefined>(resolve => {
+      this.dispatchEvent(
+        new CustomEvent('request-libdoc', {
+          detail: { callback: resolve },
+          bubbles: true,
+          composed: true,
+        })
+      );
+    });
+    if (lNodeLib) LNODELIB = lNodeLib;
+    this.requestUpdate();
   }
 
   addFunction(): void {
@@ -410,10 +454,58 @@ export default class SclBayTemplate extends LitElement {
     ></mwc-dialog>`;
   }
 
+  private openLibDocInfoDialog() {
+    this.lnodeLibDialog?.show();
+  }
+
+  private closeLibDocInfoDialog() {
+    this.lnodeLibDialog?.close();
+  }
+
+  private renderLibDocInfoDialog(): TemplateResult {
+    const { fileName, version, lastUpdated } = getLibDocInfo(LNODELIB);
+
+    let formattedDate = lastUpdated;
+    if (lastUpdated) {
+      const date = new Date(lastUpdated);
+      if (!Number.isNaN(date.getTime())) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const time = date.toTimeString().slice(0, 8);
+        formattedDate = `${day}-${month}-${year} ${time}`;
+      }
+    }
+    return html`
+      <mwc-dialog
+        id="lnode-lib-info"
+        heading="LNodeType Library Info"
+        @closed=${this.closeLibDocInfoDialog}
+      >
+        <div>
+          <div>
+            <b>File name:</b> ${fileName || 'No LNodeType Library loaded'}
+          </div>
+          <div><b>Version:</b> ${version}</div>
+          <div><b>Last update:</b> ${formattedDate}</div>
+        </div>
+        <mwc-button slot="primaryAction" dialogAction="close">Close</mwc-button>
+      </mwc-dialog>
+    `;
+  }
+
   render() {
     if (!this.substation) return html`<main>No substation section</main>`;
 
     return html`<main>
+      <div class="btn-group">
+        <mwc-icon-button
+          icon="info"
+          @click="${() => this.openLibDocInfoDialog()}"
+          title="Show LibDoc info"
+          ></mwc-icon-button>
+      </div>
+      <div class="columns">
         <div style="margin:10px;width:${this.sldWidth}px">
           <div>
             <span title="Resize SLD"
@@ -453,11 +545,14 @@ export default class SclBayTemplate extends LitElement {
               .doc="${this.doc}"
               editCount="${this.editCount}"
               .function="${this.selectedFunc}"
+              .lNodeLib="${LNODELIB}"
             ></compas-function-editor-a1b2c3d4>
           </div>
         </div>
+        <div>
       </main>
-      ${this.renderWidthDialog()}`;
+      ${this.renderWidthDialog()}
+      ${this.renderLibDocInfoDialog()}`;
   }
 
   static styles = css`
@@ -486,7 +581,6 @@ export default class SclBayTemplate extends LitElement {
     main {
       width: 100%;
       height: 100%;
-      display: flex;
       --mdc-theme-text-disabled-on-light: rgba(0, 0, 0, 0.38);
     }
 
@@ -502,6 +596,11 @@ export default class SclBayTemplate extends LitElement {
 
     .container.unmapped {
       background-color: var(--oscd-secondary);
+    }
+
+    .columns {
+      display: flex;
+      flex-direction: row;
     }
 
     .container.allfunc {
@@ -523,6 +622,13 @@ export default class SclBayTemplate extends LitElement {
     .container.selected {
       background-color: var(--oscd-base00);
       color: var(--oscd-base2);
+    }
+
+    .btn-group {
+      display: flex;
+      margin-right: 12px;
+      justify-content: flex-end;
+      align-items: baseline;
     }
   `;
 }

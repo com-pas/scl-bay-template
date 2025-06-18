@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-expressions */
 import { expect, fixture, html, waitUntil } from '@open-wc/testing';
-import { restore, SinonSpy, spy } from 'sinon';
+import { restore, spy } from 'sinon';
 
 import SclBayTemplate from './scl-bay-template.js';
 import { testScl } from './scl-bay-template.testfiles.js';
@@ -10,12 +10,21 @@ describe('SclBayTemplate Plugin', () => {
 
   let element: SclBayTemplate;
   let doc: XMLDocument;
+  let compasApiMock: any;
 
   beforeEach(async () => {
     doc = new DOMParser().parseFromString(testScl, 'application/xml');
-
+    compasApiMock = {
+      lNodeLibrary: {
+        loadLNodeLibrary: async () => {},
+        lNodeLibrary: () => undefined,
+      },
+    };
     element = await fixture(
-      html`<scl-bay-template .doc=${doc}></scl-bay-template>`
+      html`<scl-bay-template
+        .doc=${doc}
+        .compasApi=${compasApiMock}
+      ></scl-bay-template>`
     );
   });
 
@@ -23,11 +32,10 @@ describe('SclBayTemplate Plugin', () => {
     await expect(element).shadowDom.to.equalSnapshot();
   });
 
-  it('should dispatch request-libdoc on connectedCallback', async () => {
-    const listener: SinonSpy = spy();
-    element.addEventListener('request-libdoc', listener);
+  it('calls compasApi.lNodeLibrary.loadLNodeLibrary on connectedCallback', async () => {
+    const loadSpy = spy(compasApiMock.lNodeLibrary, 'loadLNodeLibrary');
     element.connectedCallback();
-    expect(listener.calledOnce).to.be.true;
+    expect(loadSpy.calledOnce).to.be.true;
     restore();
   });
 
@@ -45,12 +53,8 @@ describe('SclBayTemplate Plugin', () => {
       </Header>
     </SCL>`;
     const ssdDoc = new DOMParser().parseFromString(ssdXml, 'application/xml');
-
-    element.addEventListener('request-libdoc', (e: Event) => {
-      (e as CustomEvent).detail.callback(ssdDoc);
-    });
-
-    await (element as any).requestLNodeLibrary();
+    compasApiMock.lNodeLibrary.lNodeLibrary = () => ssdDoc;
+    element.requestUpdate();
     await element.updateComplete;
 
     expect(element.lnodeLibDialog?.open).to.be.false;

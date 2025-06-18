@@ -161,8 +161,13 @@ export default class SclBayTemplate extends LitElement {
     return this.doc?.querySelector(':root > Substation') ?? null;
   }
 
-  @property({ type: Object })
-  compasApi: any;
+  @property({ attribute: false })
+  compasApi?: {
+    lNodeLibrary: {
+      loadLNodeLibrary: () => Promise<Document | null>;
+      lNodeLibrary: () => Document | null;
+    };
+  };
 
   @state()
   lNodeTypeSrc: { name: string; src: XMLDocument }[] = [];

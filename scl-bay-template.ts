@@ -35,8 +35,6 @@ export const ns6100 = 'http://www.iec.ch/61850/2019/SCL/6-100';
 
 export const pref6100 = 'eTr_6-100';
 
-let LNODELIB: XMLDocument | undefined | null = null;
-
 function funcPath(func: Element, path: string[]): string {
   if (!func.parentElement || func.parentElement.tagName === 'SCL') {
     const name = func.getAttribute('name') ?? '';
@@ -163,6 +161,9 @@ export default class SclBayTemplate extends LitElement {
     return this.doc?.querySelector(':root > Substation') ?? null;
   }
 
+  @property({ type: Object })
+  compasApi: any;
+
   @state()
   lNodeTypeSrc: { name: string; src: XMLDocument }[] = [];
 
@@ -207,26 +208,16 @@ export default class SclBayTemplate extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    this.requestLNodeLibrary();
+    if (this.compasApi?.lNodeLibrary?.loadLNodeLibrary) {
+      this.compasApi.lNodeLibrary
+        .loadLNodeLibrary()
+        .then(() => this.requestUpdate());
+    }
   }
 
   private openCreateWizard(tagName: string): void {
     if (this.parent)
       this.dispatchEvent(newCreateWizardEvent(this.parent, tagName));
-  }
-
-  private async requestLNodeLibrary() {
-    const lNodeLib = await new Promise<XMLDocument | undefined>(resolve => {
-      this.dispatchEvent(
-        new CustomEvent('request-libdoc', {
-          detail: { callback: resolve },
-          bubbles: true,
-          composed: true,
-        })
-      );
-    });
-    if (lNodeLib) LNODELIB = lNodeLib;
-    this.requestUpdate();
   }
 
   addFunction(): void {
@@ -463,7 +454,8 @@ export default class SclBayTemplate extends LitElement {
   }
 
   private renderLibDocInfoDialog(): TemplateResult {
-    const { fileName, version, lastUpdated } = getLibDocInfo(LNODELIB);
+    const libDoc = this.compasApi?.lNodeLibrary?.lNodeLibrary() ?? null;
+    const { fileName, version, lastUpdated } = getLibDocInfo(libDoc);
 
     let formattedDate = lastUpdated;
     if (lastUpdated) {
@@ -545,7 +537,9 @@ export default class SclBayTemplate extends LitElement {
               .doc="${this.doc}"
               editCount="${this.editCount}"
               .function="${this.selectedFunc}"
-              .lNodeLib="${LNODELIB}"
+              .lNodeLib="${
+                this.compasApi?.lNodeLibrary?.lNodeLibrary() ?? null
+              }"
             ></compas-function-editor-a1b2c3d4>
           </div>
         </div>

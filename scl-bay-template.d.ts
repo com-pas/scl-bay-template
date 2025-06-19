@@ -15,13 +15,19 @@ export declare const pref6100 = "eTr_6-100";
 export default class SclBayTemplate extends LitElement {
     doc?: XMLDocument;
     docs: Record<string, XMLDocument>;
+    editCount: number;
+    get substation(): Element | null;
+    compasApi?: {
+        lNodeLibrary: {
+            loadLNodeLibrary: () => Promise<Document | null>;
+            lNodeLibrary: () => Document | null;
+        };
+    };
     lNodeTypeSrc: {
         name: string;
         src: XMLDocument;
     }[];
-    get substation(): Element | null;
     gridSize: number;
-    editCount: number;
     get bay(): Element | null;
     parent?: Element;
     selectedFunc?: Element;
@@ -35,6 +41,8 @@ export default class SclBayTemplate extends LitElement {
     proResMax: TextField;
     proResService: TextField;
     sldWidthDiag?: Dialog;
+    lnodeLibDialog?: Dialog;
+    connectedCallback(): void;
     private openCreateWizard;
     addFunction(): void;
     addSubFunction(parent: Element): void;
@@ -42,6 +50,9 @@ export default class SclBayTemplate extends LitElement {
     importFunction(event: Event): Promise<void>;
     private renderFuncContainers;
     private renderWidthDialog;
+    private openLibDocInfoDialog;
+    private closeLibDocInfoDialog;
+    private renderLibDocInfoDialog;
     render(): TemplateResult<1>;
     static styles: import("lit").CSSResult;
 }

@@ -24,12 +24,13 @@ type Output = {
 export default class FunctionEditor9030 extends LitElement {
     function: Element;
     docs: Record<string, XMLDocument>;
+    lNodeLib?: XMLDocument;
+    editCount: number;
     lNodeTypeSrc: {
         name: string;
         src: XMLDocument;
     }[];
     gridSize: number;
-    editCount: number;
     parent?: Element;
     selectedFunc?: Element;
     lNodeForDetail?: Element;
@@ -74,13 +75,12 @@ export default class FunctionEditor9030 extends LitElement {
     private createSourceRefs;
     private createControlRefs;
     private saveProcessRef;
-    openDoc(event: Event): Promise<void>;
+    resetSelectionList(): Promise<void>;
     updated(changedProperties: Map<string, any>): void;
     private renderProcessResourcePicker;
     private renderDataAttributePicker;
     private renderSourceRefPicker;
     private renderExtRefPicker;
-    private renderLibraryImport;
     private renderLNodeTypePicker;
     private renderLNodeDetailContent;
     private renderLNodeDetail;

@@ -1,5 +1,6 @@
 import { TemplateResult } from 'lit';
 export declare function getChildElementsByTagName(element: Element | null | undefined, tag: string | null | undefined): Element[];
+export declare function buildLibDocName(sclElement: Element): string;
 /** Common `CSS` styles used by substation subeditors */
 export declare const styles: import("lit").CSSResult;
 export declare const powerTransformerTwoWindingIcon: TemplateResult<1>;

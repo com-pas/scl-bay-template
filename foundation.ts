@@ -8,6 +8,23 @@ export function getChildElementsByTagName(
   return Array.from(element.children).filter(child => child.tagName === tag);
 }
 
+export function buildLibDocName(sclElement: Element): string {
+  const headerElement = sclElement.querySelector(':scope > Header');
+  const privateElement = sclElement.querySelector(
+    `:scope > Private[type="compas_scl"]`
+  );
+
+  const name =
+    privateElement?.querySelector(`:scope > SclName`)?.textContent ?? '';
+  const type = 'SSD';
+
+  let docName = name ?? '';
+  if (docName === '') {
+    docName = headerElement?.getAttribute('id') ?? '';
+  }
+  return `${docName}.${type?.toLowerCase()}`;
+}
+
 /** Common `CSS` styles used by substation subeditors */
 export const styles = css`
   abbr {

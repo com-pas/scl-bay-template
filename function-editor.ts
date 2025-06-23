@@ -970,15 +970,6 @@ export default class FunctionEditor9030 extends LitElement {
     this.openCreateWizard('EqFunction');
   }
 
-  addSubFunction(parent: Element): void {
-    if (parent.tagName === 'Function' || parent.tagName === 'SubFunction') {
-      this.dispatchEvent(newCreateWizardEvent(parent, 'SubFunction'));
-      return;
-    }
-
-    this.dispatchEvent(newCreateWizardEvent(parent, 'EqSubFunction'));
-  }
-
   createNewLNodeElements(): void {
     if (!this.lnodeparent) return;
 

@@ -626,6 +626,7 @@ export default class SclBayTemplate extends LitElement {
     .btn-group {
       display: flex;
       margin-right: 12px;
+      margin-top: 12px;
       justify-content: flex-end;
       align-items: baseline;
     }

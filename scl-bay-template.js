@@ -23398,6 +23398,98 @@ let FunctionEditor9030 = class FunctionEditor9030 extends i$$ {
         this.lNodeDetail = 'inputs';
         this.items = [];
     }
+    openAddSubFunctionDialog(parent) {
+        this.subFunctionDialogParent = parent;
+        this.addSubFunctionDialog.show();
+    }
+    onClosing() {
+        this.subFunctionNameField.value = '';
+        this.subFunctionNameField.setCustomValidity('');
+        this.subFunctionDescField.value = '';
+        this.subFunctionTypeField.value = '';
+    }
+    isSubFunctionNameUnique(name) {
+        if (!this.subFunctionDialogParent)
+            return false;
+        return !Array.from(this.subFunctionDialogParent.children).some(el => {
+            var _a;
+            return (el.tagName === 'SubFunction' || el.tagName === 'EqSubFunction') &&
+                ((_a = el.getAttribute('name')) === null || _a === void 0 ? void 0 : _a.trim().toLowerCase()) === name.toLowerCase();
+        });
+    }
+    // eslint-disable-next-line class-methods-use-this
+    getSubFunctionTagName(parent) {
+        return parent.tagName === 'Function' || parent.tagName === 'SubFunction'
+            ? 'SubFunction'
+            : 'EqSubFunction';
+    }
+    createSubFunctionElement(parent, name, desc, type) {
+        const tagName = this.getSubFunctionTagName(parent);
+        const doc = parent.ownerDocument;
+        const subFunc = doc.createElement(tagName);
+        subFunc.setAttribute('name', name);
+        if (desc)
+            subFunc.setAttribute('desc', desc);
+        if (type)
+            subFunc.setAttribute('type', type);
+        return subFunc;
+    }
+    saveSubFunction() {
+        const name = this.subFunctionNameField.value.trim();
+        const desc = this.subFunctionDescField.value.trim();
+        const type = this.subFunctionTypeField.value.trim();
+        if (!this.subFunctionDialogParent)
+            return;
+        if (!this.isSubFunctionNameUnique(name)) {
+            this.subFunctionNameField.setCustomValidity('Name must be unique.');
+            this.subFunctionNameField.reportValidity();
+            return;
+        }
+        this.subFunctionNameField.setCustomValidity('');
+        if (!this.subFunctionNameField.reportValidity())
+            return;
+        const subFunc = this.createSubFunctionElement(this.subFunctionDialogParent, name, desc, type);
+        const insertEdit = {
+            parent: this.subFunctionDialogParent,
+            node: subFunc,
+            reference: null,
+        };
+        this.dispatchEvent(newEditEvent(insertEdit));
+        this.addSubFunctionDialog.close();
+    }
+    renderAddSubFunctionDialog() {
+        var _a, _b;
+        return x$1 `
+      <mwc-dialog
+        id="addSubFunctionDialog"
+        heading=${`Add ${((_a = this.subFunctionDialogParent) === null || _a === void 0 ? void 0 : _a.tagName) === 'Function' ||
+            ((_b = this.subFunctionDialogParent) === null || _b === void 0 ? void 0 : _b.tagName) === 'SubFunction'
+            ? 'SubFunction'
+            : 'EqSubFunction'}`}
+        @closing=${this.onClosing}
+      >
+        <div class="subfunc-dialog-content">
+          <mwc-textfield
+            id="subfunc-name"
+            label="Name"
+            required
+          ></mwc-textfield>
+          <mwc-textfield id="subfunc-desc" label="Description"></mwc-textfield>
+          <mwc-textfield id="subfunc-type" label="Type"></mwc-textfield>
+        </div>
+        <mwc-button slot="secondaryAction" dialogAction="close">
+          Close
+        </mwc-button>
+        <mwc-button
+          slot="primaryAction"
+          icon="save"
+          @click=${this.saveSubFunction}
+        >
+          Save
+        </mwc-button>
+      </mwc-dialog>
+    `;
+    }
     openCreateWizard(tagName) {
         if (this.parent)
             this.dispatchEvent(newCreateWizardEvent(this.parent, tagName));
@@ -23419,13 +23511,6 @@ let FunctionEditor9030 = class FunctionEditor9030 extends i$$ {
             return;
         }
         this.openCreateWizard('EqFunction');
-    }
-    addSubFunction(parent) {
-        if (parent.tagName === 'Function' || parent.tagName === 'SubFunction') {
-            this.dispatchEvent(newCreateWizardEvent(parent, 'SubFunction'));
-            return;
-        }
-        this.dispatchEvent(newCreateWizardEvent(parent, 'EqSubFunction'));
     }
     createNewLNodeElements() {
         var _a;
@@ -24112,8 +24197,7 @@ let FunctionEditor9030 = class FunctionEditor9030 extends i$$ {
       <nav>
         <mwc-icon-button
           icon="account_tree"
-          disabled
-          @click="${() => this.addSubFunction(subFunc)}"
+          @click="${() => this.openAddSubFunctionDialog(subFunc)}"
         ></mwc-icon-button>
         <mwc-icon-button
           icon="delete"
@@ -24152,8 +24236,7 @@ let FunctionEditor9030 = class FunctionEditor9030 extends i$$ {
           </mwc-icon-button>
           <mwc-icon-button
             icon="account_tree"
-            disabled
-            @click="${() => this.addSubFunction(this.function)}"
+            @click="${() => this.openAddSubFunctionDialog(this.function)}"
           >
           </mwc-icon-button>
           <mwc-icon-button
@@ -24191,6 +24274,7 @@ let FunctionEditor9030 = class FunctionEditor9030 extends i$$ {
         ${this.renderLNodeTypePicker()} ${this.renderLNodeDetail()}
         ${this.renderExtRefPicker()}
       </div>
+      ${this.renderAddSubFunctionDialog()}
     </main>`;
     }
 };
@@ -24322,6 +24406,12 @@ FunctionEditor9030.styles = i$12 `
 
     .content.prores > * {
       margin: 8px 10px 16px;
+    }
+
+    .subfunc-dialog-content {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     * {
@@ -24457,6 +24547,21 @@ __decorate([
 __decorate([
     e$1G('#lnlist')
 ], FunctionEditor9030.prototype, "lnList", void 0);
+__decorate([
+    e$1G('#addSubFunctionDialog')
+], FunctionEditor9030.prototype, "addSubFunctionDialog", void 0);
+__decorate([
+    e$1G('#subfunc-name')
+], FunctionEditor9030.prototype, "subFunctionNameField", void 0);
+__decorate([
+    e$1G('#subfunc-desc')
+], FunctionEditor9030.prototype, "subFunctionDescField", void 0);
+__decorate([
+    e$1G('#subfunc-type')
+], FunctionEditor9030.prototype, "subFunctionTypeField", void 0);
+__decorate([
+    r$O()
+], FunctionEditor9030.prototype, "subFunctionDialogParent", void 0);
 FunctionEditor9030 = __decorate([
     t$V('compas-function-editor-a1b2c3d4')
 ], FunctionEditor9030);
@@ -24934,6 +25039,7 @@ SclBayTemplate.styles = i$12 `
     .btn-group {
       display: flex;
       margin-right: 12px;
+      margin-top: 12px;
       justify-content: flex-end;
       align-items: baseline;
     }

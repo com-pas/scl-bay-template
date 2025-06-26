@@ -1,8 +1,8 @@
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-return-assign */
 /* eslint-disable lit-a11y/click-events-have-key-events */
-import { css, html, LitElement, nothing, TemplateResult } from 'lit';
-import { customElement, property, query, state } from 'lit/decorators.js';
+import { LitElement, html, css, nothing, TemplateResult } from 'lit';
+import { customElement, property, state, query } from 'lit/decorators.js';
 
 import { classMap } from 'lit/directives/class-map.js';
 
@@ -17,7 +17,7 @@ import '@material/mwc-textfield';
 import type { Dialog } from '@material/mwc-dialog';
 import type { TextField } from '@material/mwc-textfield';
 
-import { Edit, Insert, newEditEvent, Remove } from '@openscd/open-scd-core';
+import { Edit, Insert, Remove, newEditEvent } from '@openscd/open-scd-core';
 
 import '@openscd/oscd-tree-grid';
 import type { Path, TreeGrid } from '@openscd/oscd-tree-grid';
@@ -49,7 +49,7 @@ import {
   dataAttributeTree,
   getSourceDef,
 } from './foundation/dataAttributePicker.js';
-import { newCreateWizardEvent, newEditWizardEvent } from './foundation.js';
+import './components/function-element-dialog.js';
 
 const uri6100 = 'http://www.iec.ch/61850/2019/SCL/6-100';
 const xmlnsNs = 'http://www.w3.org/2000/xmlns/';
@@ -818,137 +818,39 @@ export default class FunctionEditor9030 extends LitElement {
 
   @query('#lnlist') lnList!: SelectionList;
 
-  @query('#addSubFunctionDialog') addSubFunctionDialog!: Dialog;
-
-  @query('#subfunc-name') subFunctionNameField!: TextField;
-
-  @query('#subfunc-desc') subFunctionDescField!: TextField;
-
-  @query('#subfunc-type') subFunctionTypeField!: TextField;
+  @query('#function-element-dialog') functionElementDialog!: Dialog;
 
   @state()
-  subFunctionDialogParent?: Element;
+  showElementDialog = false;
 
-  private openAddSubFunctionDialog(parent: Element): void {
-    this.subFunctionDialogParent = parent;
-    this.addSubFunctionDialog.show();
-  }
+  @state()
+  dialogRequireUniqueName = false;
 
-  private onClosing(): void {
-    this.subFunctionNameField.value = '';
-    this.subFunctionNameField.setCustomValidity('');
-    this.subFunctionDescField.value = '';
-    this.subFunctionTypeField.value = '';
-  }
+  @state()
+  dialogSiblings: Element[] = [];
 
-  private isSubFunctionNameUnique(name: string): boolean {
-    if (!this.subFunctionDialogParent) return false;
-    return !Array.from(this.subFunctionDialogParent.children).some(
-      el =>
-        (el.tagName === 'SubFunction' || el.tagName === 'EqSubFunction') &&
-        el.getAttribute('name')?.trim().toLowerCase() === name.toLowerCase()
-    );
-  }
+  @state()
+  dialogElement?: Element;
 
-  // eslint-disable-next-line class-methods-use-this
-  private getSubFunctionTagName(
-    parent: Element
-  ): 'SubFunction' | 'EqSubFunction' {
-    return parent.tagName === 'Function' || parent.tagName === 'SubFunction'
-      ? 'SubFunction'
-      : 'EqSubFunction';
-  }
+  @state()
+  dialogParent?: Element;
 
-  private createSubFunctionElement(
-    parent: Element,
-    name: string,
-    desc: string,
-    type: string
-  ): Element {
-    const tagName = this.getSubFunctionTagName(parent);
-    const doc = parent.ownerDocument;
-    const subFunc = doc.createElement(tagName);
-    subFunc.setAttribute('name', name);
-    if (desc) subFunc.setAttribute('desc', desc);
-    if (type) subFunc.setAttribute('type', type);
-    return subFunc;
-  }
+  @state()
+  dialogTagName?: string;
 
-  private saveSubFunction(): void {
-    const name = this.subFunctionNameField.value.trim();
-    const desc = this.subFunctionDescField.value.trim();
-    const type = this.subFunctionTypeField.value.trim();
+  private closeElementDialog = () => {
+    this.showElementDialog = false;
+    this.dialogElement = undefined;
+    this.dialogParent = undefined;
+    this.dialogTagName = undefined;
+    this.dialogRequireUniqueName = false;
+    this.dialogSiblings = [];
+  };
 
-    if (!this.subFunctionDialogParent) return;
-
-    if (!this.isSubFunctionNameUnique(name)) {
-      this.subFunctionNameField.setCustomValidity('Name must be unique.');
-      this.subFunctionNameField.reportValidity();
-      return;
-    }
-    this.subFunctionNameField.setCustomValidity('');
-
-    if (!this.subFunctionNameField.reportValidity()) return;
-
-    const subFunc = this.createSubFunctionElement(
-      this.subFunctionDialogParent,
-      name,
-      desc,
-      type
-    );
-
-    const insertEdit = {
-      parent: this.subFunctionDialogParent,
-      node: subFunc,
-      reference: null,
-    };
-    this.dispatchEvent(newEditEvent(insertEdit as Insert));
-    this.addSubFunctionDialog.close();
-  }
-
-  private renderAddSubFunctionDialog(): TemplateResult {
-    return html`
-      <mwc-dialog
-        id="addSubFunctionDialog"
-        heading=${`Add ${
-          this.subFunctionDialogParent?.tagName === 'Function' ||
-          this.subFunctionDialogParent?.tagName === 'SubFunction'
-            ? 'SubFunction'
-            : 'EqSubFunction'
-        }`}
-        @closing=${this.onClosing}
-      >
-        <div class="subfunc-dialog-content">
-          <mwc-textfield
-            id="subfunc-name"
-            label="Name"
-            required
-          ></mwc-textfield>
-          <mwc-textfield id="subfunc-desc" label="Description"></mwc-textfield>
-          <mwc-textfield id="subfunc-type" label="Type"></mwc-textfield>
-        </div>
-        <mwc-button slot="secondaryAction" dialogAction="close">
-          Close
-        </mwc-button>
-        <mwc-button
-          slot="primaryAction"
-          icon="save"
-          @click=${this.saveSubFunction}
-        >
-          Save
-        </mwc-button>
-      </mwc-dialog>
-    `;
-  }
-
-  private openCreateWizard(tagName: string): void {
-    if (this.parent)
-      this.dispatchEvent(newCreateWizardEvent(this.parent, tagName));
-  }
-
-  private openEditWizard(element: Element): void {
-    this.dispatchEvent(newEditWizardEvent(element));
-  }
+  private handleElementDialogSave = (e: CustomEvent) => {
+    this.dispatchEvent(newEditEvent(e.detail));
+    this.closeElementDialog();
+  };
 
   private removeFunction(func: Element): void {
     this.dispatchEvent(newEditEvent({ node: func }));
@@ -956,18 +858,6 @@ export default class FunctionEditor9030 extends LitElement {
 
   private removeElement(srcRef: Element): void {
     this.dispatchEvent(newEditEvent({ node: srcRef }));
-  }
-
-  addFunction(): void {
-    if (
-      (this.parent && this.parent?.tagName === 'Bay') ||
-      this.parent?.tagName === 'VoltageLevel'
-    ) {
-      this.openCreateWizard('Function');
-      return;
-    }
-
-    this.openCreateWizard('EqFunction');
   }
 
   createNewLNodeElements(): void {
@@ -1129,6 +1019,22 @@ export default class FunctionEditor9030 extends LitElement {
     await this.lnList.updateComplete;
 
     this.lnList.items = deselectedItems;
+  }
+
+  openElementDialog(options: {
+    element?: Element;
+    parent?: Element;
+    tagName?: string;
+    heading?: string;
+    requireUniqueName?: boolean;
+    siblings?: Element[];
+  }) {
+    this.dialogElement = options.element;
+    this.dialogParent = options.parent;
+    this.dialogTagName = options.tagName;
+    this.dialogRequireUniqueName = !!options.requireUniqueName;
+    this.dialogSiblings = options.siblings ?? [];
+    this.showElementDialog = true;
   }
 
   updated(changedProperties: Map<string, any>) {
@@ -1801,8 +1707,36 @@ export default class FunctionEditor9030 extends LitElement {
     >
       <nav>
         <mwc-icon-button
+          icon="edit"
+          @click="${() => {
+            this.openElementDialog({
+              element: subFunc!,
+              parent: this.parent!,
+              tagName: subFunc!.tagName,
+              requireUniqueName: true,
+              siblings: this.parent?.children
+                ? Array.from(this.parent?.children).filter(
+                    el => el.tagName === subFunc!.tagName
+                  )
+                : [],
+            });
+          }}"
+        >
+        </mwc-icon-button>
+        <mwc-icon-button
           icon="account_tree"
-          @click="${() => this.openAddSubFunctionDialog(subFunc)}"
+          @click="${() => {
+            this.openElementDialog({
+              element: undefined,
+              parent: subFunc,
+              tagName: 'SubFunction',
+              heading: 'Add SubFunction',
+              requireUniqueName: true,
+              siblings: Array.from(subFunc.children).filter(
+                el => el.tagName === 'SubFunction'
+              ),
+            });
+          }}"
         ></mwc-icon-button>
         <mwc-icon-button
           icon="delete"
@@ -1841,12 +1775,35 @@ export default class FunctionEditor9030 extends LitElement {
         <nav>
           <mwc-icon-button
             icon="edit"
-            @click="${() => this.openEditWizard(this.function!)}"
+            @click="${() => {
+              this.openElementDialog({
+                element: this.function!,
+                parent: this.parent!,
+                tagName: this.function!.tagName,
+                requireUniqueName: true,
+                siblings: this.parent?.children
+                  ? Array.from(this.parent?.children).filter(
+                      el => el.tagName === this.function!.tagName
+                    )
+                  : [],
+              });
+            }}"
           >
           </mwc-icon-button>
           <mwc-icon-button
             icon="account_tree"
-            @click="${() => this.openAddSubFunctionDialog(this.function!)}"
+            data-testid="add-subfunction-btn"
+            @click="${() => {
+              this.openElementDialog({
+                element: undefined,
+                parent: this.function!,
+                tagName: 'SubFunction',
+                requireUniqueName: true,
+                siblings: Array.from(this.function!.children).filter(
+                  el => el.tagName === 'SubFunction'
+                ),
+              });
+            }}"
           >
           </mwc-icon-button>
           <mwc-icon-button
@@ -1891,7 +1848,16 @@ export default class FunctionEditor9030 extends LitElement {
         ${this.renderLNodeTypePicker()} ${this.renderLNodeDetail()}
         ${this.renderExtRefPicker()}
       </div>
-      ${this.renderAddSubFunctionDialog()}
+      <function-element-dialog
+        .element=${this.dialogElement}
+        .parent=${this.dialogParent}
+        .elTagName=${this.dialogTagName}
+        .open=${this.showElementDialog}
+        .requireUniqueName=${this.dialogRequireUniqueName}
+        .siblings=${this.dialogSiblings}
+        @save=${this.handleElementDialogSave}
+        @close=${this.closeElementDialog}
+      ></function-element-dialog>
     </main>`;
   }
 
@@ -2023,12 +1989,6 @@ export default class FunctionEditor9030 extends LitElement {
 
     .content.prores > * {
       margin: 8px 10px 16px;
-    }
-
-    .subfunc-dialog-content {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
     }
 
     * {

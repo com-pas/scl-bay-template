@@ -1841,7 +1841,6 @@ export default class FunctionEditor9030 extends LitElement {
         <nav>
           <mwc-icon-button
             icon="edit"
-            disabled
             @click="${() => this.openEditWizard(this.function!)}"
           >
           </mwc-icon-button>

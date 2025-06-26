@@ -24230,7 +24230,6 @@ let FunctionEditor9030 = class FunctionEditor9030 extends i$$ {
         <nav>
           <mwc-icon-button
             icon="edit"
-            disabled
             @click="${() => this.openEditWizard(this.function)}"
           >
           </mwc-icon-button>

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-expressions */
 import { html, fixture, expect } from '@open-wc/testing';
-import './function-editor.js';
+import './editor/function-editor.js';
 import { testScl } from './scl-bay-template.testfiles.js';
 
 describe('FunctionEditor', () => {

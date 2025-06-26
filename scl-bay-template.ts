@@ -27,7 +27,7 @@ import { newCreateWizardEvent, buildLibDocName } from './foundation.js';
 import { resizePath } from './foundation/sldIcons.js';
 
 import './sld-viewer.js';
-import './function-editor.js';
+import './editor/function-editor.js';
 
 export const xmlnsNs = 'http://www.w3.org/2000/xmlns/';
 

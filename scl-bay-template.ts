@@ -23,7 +23,9 @@ import { createElement } from '@openenergytools/scl-lib/dist/foundation/utils.js
 
 import { getReference, importLNodeType } from '@openenergytools/scl-lib';
 
-import AddFunctionDialog from './components/add-function-dialog.js';
+import AddFunctionDialog, {
+  DialogMode,
+} from './components/add-function-dialog.js';
 
 import { newCreateWizardEvent, buildLibDocName } from './foundation.js';
 import { resizePath } from './foundation/sldIcons.js';
@@ -246,13 +248,12 @@ export default class SclBayTemplate extends LitElement {
     if (isBayOrVoltageLevel) {
       this.openCreateWizard('Function');
     } else if (elementOrParentIsPowerTransformer) {
-      // Add function to parent bay, VoltageLevel or substation
-      // Add PowerSystemRelation -> PowerTransformer
+      this.addFunctionDialog?.show(this.parent!, DialogMode.PowerTransformer);
     } else if (isConductingEquipment) {
-      // console.log('conduction eq add function')
-      this.addFunctionDialog?.show();
-      // Add function to parent bay
-      // Add PowerSystemRelation -> ConductingEquipment
+      this.addFunctionDialog?.show(
+        this.parent!,
+        DialogMode.ConductingEquipment
+      );
     }
   }
 

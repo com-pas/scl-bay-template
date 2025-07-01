@@ -23,6 +23,8 @@ import { createElement } from '@openenergytools/scl-lib/dist/foundation/utils.js
 
 import { getReference, importLNodeType } from '@openenergytools/scl-lib';
 
+import AddFunctionDialog from './components/add-function-dialog.js';
+
 import { newCreateWizardEvent, buildLibDocName } from './foundation.js';
 import { resizePath } from './foundation/sldIcons.js';
 
@@ -211,6 +213,8 @@ export default class SclBayTemplate extends LitElement {
 
   @query('#lnode-lib-info') lnodeLibDialog?: Dialog;
 
+  @query('#add-function-dialog') addFunctionDialog?: AddFunctionDialog;
+
   connectedCallback() {
     super.connectedCallback();
     if (this.compasApi?.lNodeLibrary?.loadLNodeLibrary) {
@@ -226,15 +230,30 @@ export default class SclBayTemplate extends LitElement {
   }
 
   addFunction(): void {
-    if (
-      (this.parent && this.parent?.tagName === 'Bay') ||
-      this.parent?.tagName === 'VoltageLevel'
-    ) {
-      this.openCreateWizard('Function');
+    const hasNotSelectedElement = this.parent === undefined;
+    if (hasNotSelectedElement) {
+      // Show info to select element in SLD first
       return;
     }
 
-    this.openCreateWizard('EqFunction');
+    const tagName = this.parent?.tagName;
+    const parentTagName = this.parent?.parentElement?.tagName;
+    const isBayOrVoltageLevel = tagName === 'Bay' || tagName === 'VoltageLevel';
+    const elementOrParentIsPowerTransformer =
+      tagName === 'PowerTransformer' || parentTagName === 'PowerTransformer';
+    const isConductingEquipment = tagName === 'ConductingEquipment';
+
+    if (isBayOrVoltageLevel) {
+      this.openCreateWizard('Function');
+    } else if (elementOrParentIsPowerTransformer) {
+      // Add function to parent bay, VoltageLevel or substation
+      // Add PowerSystemRelation -> PowerTransformer
+    } else if (isConductingEquipment) {
+      // console.log('conduction eq add function')
+      this.addFunctionDialog?.show();
+      // Add function to parent bay
+      // Add PowerSystemRelation -> ConductingEquipment
+    }
   }
 
   addSubFunction(parent: Element): void {
@@ -369,7 +388,6 @@ export default class SclBayTemplate extends LitElement {
         />
         <span title="Create New Function/EqFunction">
           <mwc-icon-button
-            disabled
             icon="functions"
             @click="${() => this.addFunction()}"
           ></mwc-icon-button>
@@ -448,6 +466,13 @@ export default class SclBayTemplate extends LitElement {
         }}"
       ></mwc-button
     ></mwc-dialog>`;
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  private renderAddFunctionDialog(): TemplateResult {
+    return html`<add-function-dialog
+      id="add-function-dialog"
+    ></add-function-dialog>`;
   }
 
   private openLibDocInfoDialog() {
@@ -551,6 +576,7 @@ export default class SclBayTemplate extends LitElement {
         <div>
       </main>
       ${this.renderWidthDialog()}
+      ${this.renderAddFunctionDialog()}
       ${this.renderLibDocInfoDialog()}`;
   }
 

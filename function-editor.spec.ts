@@ -19,24 +19,48 @@ describe('FunctionEditor', () => {
     await element.updateComplete;
   });
 
-  it('renders the add subfunction dialog and fields', () => {
-    element.addSubFunctionDialog.show();
-    expect(element.addSubFunctionDialog.open).to.be.true;
-    expect(element.subFunctionNameField).to.exist;
-    expect(element.subFunctionDescField).to.exist;
-    expect(element.subFunctionTypeField).to.exist;
+  it('renders the add subfunction dialog and fields', async () => {
+    const addButton = element.shadowRoot.querySelector(
+      '[data-testid="add-subfunction-btn"]'
+    );
+    addButton.click();
+    await element.updateComplete;
+    const dialog = element.shadowRoot.querySelector('function-element-dialog');
+    dialog.open = true;
+    await dialog.updateComplete;
+
+    expect(dialog.open).to.be.true;
+    const nameField = dialog.shadowRoot.querySelector('#name');
+    const descField = dialog.shadowRoot.querySelector('#desc');
+    const typeField = dialog.shadowRoot.querySelector('#type');
+    expect(nameField).to.exist;
+    expect(descField).to.exist;
+    expect(typeField).to.exist;
   });
 
   it('enforces unique subfunction names', async () => {
     const parent = doc.querySelector('Function');
     element.subFunctionDialogParent = parent;
 
-    element.addSubFunctionDialog.show();
-    element.subFunctionNameField.value = 'General';
-    element.saveSubFunction();
-    await element.updateComplete;
-    expect(element.subFunctionNameField.validationMessage).to.match(
-      /Name must be unique/i
+    const addButton = element.shadowRoot.querySelector(
+      '[data-testid="add-subfunction-btn"]'
     );
+    addButton.click();
+    await element.updateComplete;
+    const dialog = element.shadowRoot.querySelector('function-element-dialog');
+    dialog.open = true;
+    await dialog.updateComplete;
+
+    const nameField = dialog.shadowRoot.querySelector('#name');
+    nameField.value = 'General';
+    nameField.dispatchEvent(
+      new Event('input', { bubbles: true, composed: true })
+    );
+    const saveButton = dialog.shadowRoot.querySelector(
+      'mwc-button[slot="primaryAction"]'
+    );
+    saveButton.click();
+    await element.updateComplete;
+    expect(nameField.validationMessage).to.match(/Name must be unique/i);
   });
 });

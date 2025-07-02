@@ -51,11 +51,16 @@ describe('FunctionEditor', () => {
     dialog.open = true;
     await dialog.updateComplete;
 
-    element.subFunctionNameField.value = 'General';
-    element.saveSubFunction();
-    await element.updateComplete;
-    expect(element.subFunctionNameField.validationMessage).to.match(
-      /Name must be unique/i
+    const nameField = dialog.shadowRoot.querySelector('#name');
+    nameField.value = 'General';
+    nameField.dispatchEvent(
+      new Event('input', { bubbles: true, composed: true })
     );
+    const saveButton = dialog.shadowRoot.querySelector(
+      'mwc-button[slot="primaryAction"]'
+    );
+    saveButton.click();
+    await element.updateComplete;
+    expect(nameField.validationMessage).to.match(/Name must be unique/i);
   });
 });

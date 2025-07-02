@@ -818,8 +818,6 @@ export default class FunctionEditor9030 extends LitElement {
 
   @query('#lnlist') lnList!: SelectionList;
 
-  @query('#function-element-dialog') functionElementDialog!: Dialog;
-
   @state()
   showElementDialog = false;
 
@@ -1698,7 +1696,7 @@ export default class FunctionEditor9030 extends LitElement {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  private renderSubFunction(subFunc: Element): TemplateResult {
+  private renderSubFunction(subFunc: Element, parent: Element): TemplateResult {
     return html`<div
       class="${classMap({
         container: true,
@@ -1711,14 +1709,10 @@ export default class FunctionEditor9030 extends LitElement {
           @click="${() => {
             this.openElementDialog({
               element: subFunc!,
-              parent: this.parent!,
+              parent,
               tagName: subFunc!.tagName,
               requireUniqueName: true,
-              siblings: this.parent?.children
-                ? Array.from(this.parent?.children).filter(
-                    el => el.tagName === subFunc!.tagName
-                  )
-                : [],
+              siblings: parent?.children ? Array.from(parent?.children) : [],
             });
           }}"
         >
@@ -1732,9 +1726,7 @@ export default class FunctionEditor9030 extends LitElement {
               tagName: 'SubFunction',
               heading: 'Add SubFunction',
               requireUniqueName: true,
-              siblings: Array.from(subFunc.children).filter(
-                el => el.tagName === 'SubFunction'
-              ),
+              siblings: subFunc.children ? Array.from(subFunc.children) : [],
             });
           }}"
         ></mwc-icon-button>
@@ -1756,7 +1748,7 @@ export default class FunctionEditor9030 extends LitElement {
       ${subFunc.getAttribute('name')}
       ${Array.from(
         subFunc.querySelectorAll(':scope > SubFunction, :scope > EqSubFunction')
-      ).map(subSubFunc => this.renderSubFunction(subSubFunc))}
+      ).map(subSubFunc => this.renderSubFunction(subSubFunc, subFunc))}
       ${Array.from(subFunc.querySelectorAll(':scope > LNode')).map(lNode =>
         this.renderLNodes(lNode)
       )}
@@ -1780,12 +1772,7 @@ export default class FunctionEditor9030 extends LitElement {
                 element: this.function!,
                 parent: this.parent!,
                 tagName: this.function!.tagName,
-                requireUniqueName: true,
-                siblings: this.parent?.children
-                  ? Array.from(this.parent?.children).filter(
-                      el => el.tagName === this.function!.tagName
-                    )
-                  : [],
+                requireUniqueName: false,
               });
             }}"
           >
@@ -1829,7 +1816,7 @@ export default class FunctionEditor9030 extends LitElement {
           this.function.querySelectorAll(
             ':scope > SubFunction, :scope > EqSubFunction'
           )
-        ).map(subFunc => this.renderSubFunction(subFunc))}
+        ).map(subFunc => this.renderSubFunction(subFunc, this.function))}
         ${Array.from(this.function.querySelectorAll(':scope > LNode')).map(
           lNode => this.renderLNodes(lNode)
         )}

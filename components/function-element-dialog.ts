@@ -6,6 +6,8 @@ import '@material/mwc-dialog';
 import '@material/mwc-button';
 import '@material/mwc-textfield';
 
+import type { TextField } from '@material/mwc-textfield';
+
 @customElement('function-element-dialog')
 export class FunctionElementDialog extends LitElement {
   @property({ attribute: false })
@@ -51,7 +53,12 @@ export class FunctionElementDialog extends LitElement {
     this.name = '';
     this.desc = '';
     this.type = '';
-    this.element = undefined;
+    const nameField = this.shadowRoot?.getElementById('name') as TextField;
+    if (nameField) {
+      nameField.value = '';
+      nameField.setCustomValidity('');
+    }
+    this.open = false;
   }
 
   private onDialogClosed() {
@@ -68,67 +75,61 @@ export class FunctionElementDialog extends LitElement {
     );
   }
 
-  private onNameInput(e: Event) {
-    this.name = (e.target as HTMLInputElement).value;
+  private validateName(nameField: TextField, name: string): boolean {
+    if (!name) {
+      nameField.setCustomValidity('Name is required.');
+      nameField.reportValidity();
+      return false;
+    }
+    if (!this.isNameUnique(name)) {
+      nameField.setCustomValidity('Name must be unique.');
+      nameField.reportValidity();
+      return false;
+    }
+    nameField.setCustomValidity('');
+    nameField.reportValidity();
+    return true;
   }
 
-  private onDescInput(e: Event) {
-    this.desc = (e.target as HTMLInputElement).value;
+  private createElementNode(name: string, desc: string, type: string) {
+    const doc = this.parent.ownerDocument;
+    if (!doc) return;
+    const el = doc.createElement(this.elTagName!);
+    if (!el) return;
+    el.setAttribute('name', name);
+    if (desc) el.setAttribute('desc', desc);
+    if (type) el.setAttribute('type', type);
+    const insert: Insert = {
+      parent: this.parent,
+      node: el,
+      reference: null,
+    };
+    this.dispatchEvent(newEditEvent(insert));
   }
 
-  private onTypeInput(e: Event) {
-    this.type = (e.target as HTMLInputElement).value;
+  private updateElementNode(name: string, desc: string, type: string) {
+    if (!this.element) return;
+    const update = {
+      element: this.element,
+      attributes: {
+        name,
+        desc: desc || null,
+        type: type || null,
+      },
+    };
+    this.dispatchEvent(newEditEvent(update));
   }
 
   private onSave() {
     const name = this.name.trim();
     const desc = this.desc.trim();
     const type = this.type.trim();
-
-    const nameField = this.shadowRoot?.getElementById(
-      'name'
-    ) as HTMLInputElement | null;
-    if (!name) {
-      nameField?.setCustomValidity('Name is required.');
-      nameField?.reportValidity();
-      return;
-    }
-    if (!this.isNameUnique(name)) {
-      nameField?.setCustomValidity('Name must be unique.');
-      nameField?.reportValidity();
-      return;
-    }
-    nameField?.setCustomValidity('');
-    nameField?.reportValidity();
-
+    const nameField = this.shadowRoot?.getElementById('name') as TextField;
+    if (!this.validateName(nameField, name)) return;
     if (this.isEdit && this.element) {
-      const update = {
-        element: this.element,
-        attributes: {
-          name,
-          desc: desc || null,
-          type: type || null,
-        },
-      };
-      this.dispatchEvent(newEditEvent(update));
+      this.updateElementNode(name, desc, type);
     } else {
-      const doc = this.parent.ownerDocument;
-      if (!doc) {
-        return;
-      }
-      const el = doc.createElement(this.elTagName!);
-      if (!el) {
-        return;
-      }
-      el.setAttribute('name', name);
-      if (desc) el.setAttribute('desc', desc);
-      if (type) el.setAttribute('type', type);
-      const insert: Insert = {
-        parent: this.parent,
-        node: el,
-        reference: null,
-      };
-      this.dispatchEvent(newEditEvent(insert));
+      this.createElementNode(name, desc, type);
     }
     this.onDialogClosed();
   }
@@ -149,19 +150,25 @@ export class FunctionElementDialog extends LitElement {
             label="Name"
             required
             .value=${this.name}
-            @input=${this.onNameInput}
+            @input=${(e: InputEvent) => {
+              this.name = (e.target as HTMLInputElement).value;
+            }}
           ></mwc-textfield>
           <mwc-textfield
             id="desc"
             label="Description"
             .value=${this.desc}
-            @input=${this.onDescInput}
+            @input=${(e: InputEvent) => {
+              this.desc = (e.target as HTMLInputElement).value;
+            }}
           ></mwc-textfield>
           <mwc-textfield
             id="type"
             label="Type"
             .value=${this.type}
-            @input=${this.onTypeInput}
+            @input=${(e: InputEvent) => {
+              this.type = (e.target as HTMLInputElement).value;
+            }}
           ></mwc-textfield>
         </div>
         <mwc-button

@@ -39,10 +39,7 @@ snapshots['SclBayTemplate Plugin looks like the latest snapshot'] = `<main>
               type="file"
             >
             <span title="Create New Function/EqFunction">
-              <mwc-icon-button
-                disabled=""
-                icon="functions"
-              >
+              <mwc-icon-button icon="functions">
               </mwc-icon-button>
             </span>
           </nav>
@@ -154,6 +151,8 @@ snapshots['SclBayTemplate Plugin looks like the latest snapshot'] = `<main>
   >
   </mwc-button>
 </mwc-dialog>
+<add-function-dialog id="add-function-dialog">
+</add-function-dialog>
 <mwc-dialog
   heading="LNodeType Library Info"
   id="lnode-lib-info"

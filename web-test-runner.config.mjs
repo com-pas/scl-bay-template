@@ -1,4 +1,5 @@
 /* eslint-disable import/no-extraneous-dependencies */
+import { polyfill } from '@web/dev-server-polyfill';
 
 const filteredLogs = [
   'Running in dev mode',
@@ -7,6 +8,12 @@ const filteredLogs = [
 ];
 
 export default /** @type {import("@web/test-runner").TestRunnerConfig} */ ({
+  plugins: [
+    polyfill({
+      scopedCustomElementRegistry: true,
+    }),
+  ],
+
   files: 'dist/**/*.spec.js',
 
   /** Resolve bare module imports */

@@ -49,6 +49,7 @@
     "@typescript-eslint/parser": "^5.41.0",
     "@web/dev-server": "^0.1.35",
     "@web/dev-server-esbuild": "^1.0.0",
+    "@web/dev-server-polyfill": "1.0.4",
     "@web/rollup-plugin-import-meta-assets": "^2.0.2",
     "@web/test-runner": "^0.19.0",
     "@web/test-runner-commands": "0.09",

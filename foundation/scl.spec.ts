@@ -1,7 +1,12 @@
 import { expect } from '@open-wc/testing';
 
 import { testScl } from '../scl-bay-template.testfiles';
-import { createElementNS, getProcessPath } from './scl.js';
+import {
+  createElementNS,
+  createPowerSystemRelationElement,
+  getProcessPath,
+} from './scl.js';
+import { privateType6100 } from './6-100-consts.js';
 
 describe('scl', () => {
   let doc: XMLDocument;
@@ -67,6 +72,33 @@ describe('scl', () => {
 
       expect(element.namespaceURI).to.equal(doc.documentElement.namespaceURI);
       expect(element.tagName).to.equal(tagname);
+    });
+  });
+
+  describe('createPowerSystemRelationElement', () => {
+    it('should create power system relations element', () => {
+      const relationPath = 'Sub1/VL1/Bay1/SomeElement';
+
+      const privateElement = createPowerSystemRelationElement(
+        doc,
+        relationPath
+      );
+
+      expect(privateElement.getAttribute('type')).to.equal(privateType6100);
+
+      const powerSystemRelationsElement = privateElement.querySelector(
+        'PowerSystemRelations'
+      )!;
+      const powerSystemRelationElement =
+        powerSystemRelationsElement.querySelector('PowerSystemRelation')!;
+
+      // eslint-disable-next-line no-unused-expressions
+      expect(powerSystemRelationsElement).to.not.be.null;
+      // eslint-disable-next-line no-unused-expressions
+      expect(powerSystemRelationElement).to.not.be.null;
+      expect(powerSystemRelationElement.getAttribute('relation')).to.equal(
+        relationPath
+      );
     });
   });
 });

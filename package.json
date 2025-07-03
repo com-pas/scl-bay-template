@@ -29,10 +29,12 @@
     "@material/mwc-select": "^0.27.0",
     "@material/mwc-switch": "^0.27.0",
     "@material/mwc-textfield": "^0.27.0",
+    "@open-wc/scoped-elements": "^3.0.5",
     "@openenergytools/filterable-lists": "0.0.4",
     "@openenergytools/scl-lib": "0.15.6",
     "@openscd/open-scd-core": "^0.0.2",
     "@openscd/oscd-tree-grid": "^0.0.1-alpha.12",
+    "@openenergytools/scl-text-field": "^2.0.2",
     "lit": "^3.0.0"
   },
   "devDependencies": {
@@ -47,6 +49,7 @@
     "@typescript-eslint/parser": "^5.41.0",
     "@web/dev-server": "^0.1.35",
     "@web/dev-server-esbuild": "^1.0.0",
+    "@web/dev-server-polyfill": "1.0.4",
     "@web/rollup-plugin-import-meta-assets": "^2.0.2",
     "@web/test-runner": "^0.19.0",
     "@web/test-runner-commands": "0.09",

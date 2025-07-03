@@ -1,7 +1,7 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, query } from 'lit/decorators.js';
 
-import { Insert } from '@openscd/open-scd-core';
+import { Insert, newEditEvent } from '@openscd/open-scd-core';
 
 import { SclTextField } from '@openenergytools/scl-text-field';
 import { createElement } from '@openenergytools/scl-lib/dist/foundation/utils.js';
@@ -11,6 +11,10 @@ import { createElement } from '@openenergytools/scl-lib/dist/foundation/utils.js
 import { Dialog } from '@material/mwc-dialog';
 import { Button } from '@material/mwc-button';
 import { ScopedElementsMixin } from '@open-wc/scoped-elements/lit-element.js';
+import {
+  createPowerSystemRelationElement,
+  getProcessPath,
+} from '../foundation/scl.js';
 
 // eslint-disable-next-line no-shadow
 export enum DialogMode {
@@ -56,19 +60,6 @@ export default class AddFunctionDialog extends ScopedElementsMixin(LitElement) {
     this.dialog.close();
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  private buildInsertFunction(parent: Element, values: FormValue): Insert {
-    const functionElement = createElement(parent.ownerDocument, 'Function', {
-      ...values,
-    });
-
-    return {
-      parent,
-      node: functionElement,
-      reference: null,
-    };
-  }
-
   private onSave(): void {
     const name = this.nameTextField.value;
     const desc = this.descTextField.value;
@@ -96,19 +87,45 @@ export default class AddFunctionDialog extends ScopedElementsMixin(LitElement) {
         );
       }
 
-      const functionInsert = this.buildInsertFunction(
-        bayVoltageLevelOrSubstation,
-        values
+      const isPowerTransformer = this.element.tagName === 'PowerTransformer';
+      const powerTransformer = isPowerTransformer
+        ? this.element
+        : this.element.parentElement;
+
+      if (!powerTransformer) {
+        throw new Error(`Powertransformer not found`);
+      }
+
+      const pathToPowerTransformer = getProcessPath(powerTransformer);
+      const powerSystemRelationElement = createPowerSystemRelationElement(
+        this.element.ownerDocument,
+        pathToPowerTransformer
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const inserts: Insert[] = [functionInsert];
+      const functionElement = createElement(
+        bayVoltageLevelOrSubstation.ownerDocument,
+        'Function',
+        {
+          ...values,
+        }
+      );
+
+      functionElement.appendChild(powerSystemRelationElement);
+
+      const functionInsert: Insert = {
+        parent: bayVoltageLevelOrSubstation,
+        node: functionElement,
+        reference: null,
+      };
+
+      this.dispatchEvent(newEditEvent(functionInsert));
+      this.close();
     } else {
       // Add function to parent bay
       // Add PowerSystemRelation -> ConductingEquipment
 
       const conductingEquipment = this.element;
-      const bay = conductingEquipment.closest('bay');
+      const bay = conductingEquipment.closest('Bay');
 
       if (bay === null) {
         throw new Error(
@@ -118,10 +135,26 @@ export default class AddFunctionDialog extends ScopedElementsMixin(LitElement) {
         );
       }
 
-      const functionInsert = this.buildInsertFunction(bay, values);
+      const functionElement = createElement(bay.ownerDocument, 'Function', {
+        ...values,
+      });
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const inserts: Insert[] = [functionInsert];
+      const pathToConductingEquipment = getProcessPath(conductingEquipment);
+      const powerSystemRelationElement = createPowerSystemRelationElement(
+        this.element.ownerDocument,
+        pathToConductingEquipment
+      );
+
+      functionElement.appendChild(powerSystemRelationElement);
+
+      const functionInsert: Insert = {
+        parent: bay,
+        node: functionElement,
+        reference: null,
+      };
+
+      this.dispatchEvent(newEditEvent(functionInsert));
+      this.close();
     }
   }
 

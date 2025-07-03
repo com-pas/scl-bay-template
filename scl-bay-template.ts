@@ -234,7 +234,6 @@ export default class SclBayTemplate extends LitElement {
   addFunction(): void {
     const hasNotSelectedElement = this.parent === undefined;
     if (hasNotSelectedElement) {
-      // Show info to select element in SLD first
       return;
     }
 
@@ -390,6 +389,7 @@ export default class SclBayTemplate extends LitElement {
         <span title="Create New Function/EqFunction">
           <mwc-icon-button
             icon="functions"
+            .disabled=${!this.parent}
             @click="${() => this.addFunction()}"
           ></mwc-icon-button>
         </span>

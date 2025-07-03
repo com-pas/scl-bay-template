@@ -234,7 +234,7 @@ export default class SclBayTemplate extends LitElement {
   addFunction(): void {
     const hasNotSelectedElement = this.parent === undefined;
     if (hasNotSelectedElement) {
-      return;
+      throw new Error('No element selected in SLD');
     }
 
     const tagName = this.parent?.tagName;

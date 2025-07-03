@@ -39,7 +39,10 @@ snapshots['SclBayTemplate Plugin looks like the latest snapshot'] = `<main>
               type="file"
             >
             <span title="Create New Function/EqFunction">
-              <mwc-icon-button icon="functions">
+              <mwc-icon-button
+                disabled=""
+                icon="functions"
+              >
               </mwc-icon-button>
             </span>
           </nav>

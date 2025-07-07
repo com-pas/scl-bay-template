@@ -5,8 +5,6 @@ import { Insert, newEditEvent } from '@openscd/open-scd-core';
 
 import { SclTextField } from '@openenergytools/scl-text-field';
 import { createElement } from '@openenergytools/scl-lib/dist/foundation/utils.js';
-// import '@openenergytools/scl-text-field';
-// import '@material/mwc-dialog';
 
 import { Dialog } from '@material/mwc-dialog';
 import { Button } from '@material/mwc-button';
@@ -44,8 +42,6 @@ export default class AddFunctionDialog extends ScopedElementsMixin(LitElement) {
 
   @query('scl-text-field[label="type"]') typeTextField!: SclTextField;
 
-  private reservedValues = '';
-
   private element: Element | null = null;
 
   private mode: DialogMode = DialogMode.ConductingEquipment;
@@ -57,7 +53,14 @@ export default class AddFunctionDialog extends ScopedElementsMixin(LitElement) {
   }
 
   public close() {
+    this.resetForm();
     this.dialog.close();
+  }
+
+  private resetForm(): void {
+    this.nameTextField.value = '';
+    this.descTextField.value = '';
+    this.typeTextField.value = '';
   }
 
   private onSave(): void {
@@ -119,7 +122,6 @@ export default class AddFunctionDialog extends ScopedElementsMixin(LitElement) {
       };
 
       this.dispatchEvent(newEditEvent(functionInsert));
-      this.close();
     } else {
       // Add function to parent bay
       // Add PowerSystemRelation -> ConductingEquipment
@@ -154,8 +156,8 @@ export default class AddFunctionDialog extends ScopedElementsMixin(LitElement) {
       };
 
       this.dispatchEvent(newEditEvent(functionInsert));
-      this.close();
     }
+    this.close();
   }
 
   protected render() {
@@ -168,7 +170,6 @@ export default class AddFunctionDialog extends ScopedElementsMixin(LitElement) {
           label="name"
           .value=${''}
           required
-          .reservedValues=${this.reservedValues}
           dialogInitialFocus
         ></scl-text-field>
         <scl-text-field

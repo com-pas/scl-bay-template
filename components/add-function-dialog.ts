@@ -202,5 +202,27 @@ export default class AddFunctionDialog extends ScopedElementsMixin(LitElement) {
       flex-direction: column;
       gap: 16px;
     }
+
+    * {
+      --mdc-theme-primary: var(--fedit-primary);
+      --mdc-theme-secondary: var(--fedit-secondary);
+
+      --md-sys-color-primary: var(--fedit-primary);
+      --md-sys-color-secondary: var(--fedit-secondary);
+      --md-sys-typescale-body-large-font: var(
+        --oscd-theme-text-font,
+        'Roboto',
+        sans-serif
+      );
+      --md-filled-text-field-input-text-color: var(--fedit-text-color);
+
+      --md-sys-color-surface: var(--fedit-surface);
+      --md-sys-color-on-surface: var(--fedit-text-color);
+      --md-sys-color-on-primary: var(--fedit-text-color);
+      --md-sys-color-on-surface-variant: var(--fedit-text-color);
+      --md-menu-container-color: var(--fedit-surface);
+      font-family: var(--oscd-theme-text-font, 'Roboto', sans-serif);
+      --md-sys-color-surface-container-highest: var(--fedit-surface);
+    }
   `;
 }

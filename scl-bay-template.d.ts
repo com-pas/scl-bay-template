@@ -7,6 +7,7 @@ import '@material/mwc-select';
 import '@material/mwc-textfield';
 import type { Dialog } from '@material/mwc-dialog';
 import type { TextField } from '@material/mwc-textfield';
+import AddFunctionDialog from './components/add-function-dialog.js';
 import './sld-viewer.js';
 import './function-editor.js';
 export declare const xmlnsNs = "http://www.w3.org/2000/xmlns/";
@@ -42,6 +43,7 @@ export default class SclBayTemplate extends LitElement {
     proResService: TextField;
     sldWidthDiag?: Dialog;
     lnodeLibDialog?: Dialog;
+    addFunctionDialog?: AddFunctionDialog;
     connectedCallback(): void;
     private openCreateWizard;
     addFunction(): void;
@@ -50,6 +52,7 @@ export default class SclBayTemplate extends LitElement {
     importFunction(event: Event): Promise<void>;
     private renderFuncContainers;
     private renderWidthDialog;
+    private renderAddFunctionDialog;
     private openLibDocInfoDialog;
     private closeLibDocInfoDialog;
     private renderLibDocInfoDialog;

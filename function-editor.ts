@@ -51,9 +51,9 @@ import {
 } from './foundation/dataAttributePicker.js';
 import './components/function-element-dialog.js';
 
-const uri6100 = 'http://www.iec.ch/61850/2019/SCL/6-100';
+import { prefix6100, uri6100 } from './foundation/6-100-consts.js';
+
 const xmlnsNs = 'http://www.w3.org/2000/xmlns/';
-const prefix6100 = 'eTr_6-100';
 const svgNs = 'http://www.w3.org/2000/svg';
 
 type Input = {

@@ -154,6 +154,8 @@ snapshots['SclBayTemplate Plugin looks like the latest snapshot'] = `<main>
   >
   </mwc-button>
 </mwc-dialog>
+<add-function-dialog-632c87ac id="add-function-dialog">
+</add-function-dialog-632c87ac>
 <mwc-dialog
   heading="LNodeType Library Info"
   id="lnode-lib-info"

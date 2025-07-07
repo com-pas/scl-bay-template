@@ -471,9 +471,9 @@ export default class SclBayTemplate extends LitElement {
 
   // eslint-disable-next-line class-methods-use-this
   private renderAddFunctionDialog(): TemplateResult {
-    return html`<add-function-dialog
+    return html`<add-function-dialog-632c87ac
       id="add-function-dialog"
-    ></add-function-dialog>`;
+    ></add-function-dialog-632c87ac>`;
   }
 
   private openLibDocInfoDialog() {

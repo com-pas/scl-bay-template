@@ -28,7 +28,7 @@ interface FormValue {
   type: string | null;
 }
 
-@customElement('add-function-dialog')
+@customElement('add-function-dialog-632c87ac')
 export default class AddFunctionDialog extends ScopedElementsMixin(LitElement) {
   static scopedElements = {
     'scl-text-field': SclTextField,

@@ -1,15 +1,21 @@
-import { LitElement, html, css, PropertyValues } from 'lit';
-import { property, customElement, state } from 'lit/decorators.js';
+import { LitElement, html, css } from 'lit';
+import { property, customElement, query } from 'lit/decorators.js';
 import { newEditEvent, Insert } from '@openscd/open-scd-core';
+import { ScopedElementsMixin } from '@open-wc/scoped-elements/lit-element.js';
+import { SclTextField } from '@openenergytools/scl-text-field';
+import { Dialog } from '@material/mwc-dialog';
+import { Button } from '@material/mwc-button';
 
-import '@material/mwc-dialog';
-import '@material/mwc-button';
-import '@material/mwc-textfield';
+@customElement('edit-function-dialog-e4d2f8b7')
+export default class EditFunctionDialog extends ScopedElementsMixin(
+  LitElement
+) {
+  static scopedElements = {
+    'scl-text-field': SclTextField,
+    'mwc-dialog': Dialog,
+    'mwc-button': Button,
+  };
 
-import type { TextField } from '@material/mwc-textfield';
-
-@customElement('function-element-dialog')
-export class FunctionElementDialog extends LitElement {
   @property({ attribute: false })
   element?: Element;
 
@@ -28,37 +34,31 @@ export class FunctionElementDialog extends LitElement {
   @property({ attribute: false })
   siblings: Element[] = [];
 
-  @state()
-  name = '';
+  @query('#edit-function-name') nameTextField!: SclTextField;
 
-  @state()
-  desc = '';
+  @query('#edit-function-desc') descTextField!: SclTextField;
 
-  @state()
-  type = '';
-
-  protected updated(_changedProperties: PropertyValues): void {
-    if (_changedProperties.has('element')) {
-      this.name = this.element?.getAttribute('name') ?? '';
-      this.desc = this.element?.getAttribute('desc') ?? '';
-      this.type = this.element?.getAttribute('type') ?? '';
-    }
-  }
+  @query('#edit-function-type') typeTextField!: SclTextField;
 
   private get isEdit() {
     return !!this.element;
   }
 
+  // Workaround for SclTextField: clears and nulls the value, ensuring the field is visually and logically reset.
+
+  // eslint-disable-next-line class-methods-use-this
+  private clearNullableField(field: SclTextField) {
+    const f = field;
+    f.value = '';
+    f.reset();
+    f.value = null;
+  }
+
   private resetDialog() {
-    this.name = '';
-    this.desc = '';
-    this.type = '';
-    const nameField = this.shadowRoot?.getElementById('name') as TextField;
-    if (nameField) {
-      nameField.value = '';
-      nameField.setCustomValidity('');
-    }
-    this.open = false;
+    this.nameTextField.value = '';
+    this.nameTextField.reset();
+    this.clearNullableField(this.descTextField);
+    this.clearNullableField(this.typeTextField);
   }
 
   private onDialogClosed() {
@@ -75,7 +75,8 @@ export class FunctionElementDialog extends LitElement {
     );
   }
 
-  private validateName(nameField: TextField, name: string): boolean {
+  private validateName(nameField: SclTextField): boolean {
+    const name = nameField.value?.trim();
     if (!name) {
       nameField.setCustomValidity('Name is required.');
       nameField.reportValidity();
@@ -121,15 +122,14 @@ export class FunctionElementDialog extends LitElement {
   }
 
   private onSave() {
-    const name = this.name.trim();
-    const desc = this.desc.trim();
-    const type = this.type.trim();
-    const nameField = this.shadowRoot?.getElementById('name') as TextField;
-    if (!this.validateName(nameField, name)) return;
+    const name = this.nameTextField.value?.trim();
+    const desc = this.descTextField.value?.trim() ?? '';
+    const type = this.typeTextField.value?.trim() ?? '';
+    if (!this.validateName(this.nameTextField)) return;
     if (this.isEdit && this.element) {
-      this.updateElementNode(name, desc, type);
+      this.updateElementNode(name!, desc, type);
     } else {
-      this.createElementNode(name, desc, type);
+      this.createElementNode(name!, desc, type);
     }
     this.onDialogClosed();
   }
@@ -145,31 +145,36 @@ export class FunctionElementDialog extends LitElement {
         @closed=${this.onDialogClosed}
       >
         <div class="dialog-content">
-          <mwc-textfield
-            id="name"
-            label="Name"
+          <scl-text-field
+            id="edit-function-name"
+            label="name"
             required
-            .value=${this.name}
+            .value=${this.element?.getAttribute('name') ?? ''}
+          ></scl-text-field>
+          <scl-text-field
+            id="edit-function-desc"
+            label="desc"
+            nullable
+            .value=${this.element?.getAttribute('desc') ?? null}
             @input=${(e: InputEvent) => {
-              this.name = (e.target as HTMLInputElement).value;
+              const field = e.target as SclTextField;
+              if (field.value === null) {
+                this.clearNullableField(field);
+              }
             }}
-          ></mwc-textfield>
-          <mwc-textfield
-            id="desc"
-            label="Description"
-            .value=${this.desc}
+          ></scl-text-field>
+          <scl-text-field
+            id="edit-function-type"
+            label="type"
+            nullable
+            .value=${this.element?.getAttribute('type') ?? null}
             @input=${(e: InputEvent) => {
-              this.desc = (e.target as HTMLInputElement).value;
+              const field = e.target as SclTextField;
+              if (field.value === null) {
+                this.clearNullableField(field);
+              }
             }}
-          ></mwc-textfield>
-          <mwc-textfield
-            id="type"
-            label="Type"
-            .value=${this.type}
-            @input=${(e: InputEvent) => {
-              this.type = (e.target as HTMLInputElement).value;
-            }}
-          ></mwc-textfield>
+          ></scl-text-field>
         </div>
         <mwc-button
           class="close-btn"
@@ -186,13 +191,19 @@ export class FunctionElementDialog extends LitElement {
   }
 
   static styles = css`
+    :host {
+      --md-switch-selected-hover-handle-color: #000;
+      --md-switch-selected-pressed-handle-color: #000;
+      --md-switch-selected-focus-handle-color: #000;
+      --md-sys-color-primary: var(--oscd-primary);
+    }
     .dialog-content {
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
     .close-btn {
-      --mdc-theme-primary: var(--oscd-theme-error);
+      --mdc-theme-primary: var(--oscd-error);
     }
   `;
 }

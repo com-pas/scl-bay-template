@@ -49,7 +49,7 @@ import {
   dataAttributeTree,
   getSourceDef,
 } from './foundation/dataAttributePicker.js';
-import './components/function-element-dialog.js';
+import './components/edit-function-dialog.js';
 
 import { prefix6100, uri6100 } from './foundation/6-100-consts.js';
 
@@ -1835,7 +1835,7 @@ export default class FunctionEditor9030 extends LitElement {
         ${this.renderLNodeTypePicker()} ${this.renderLNodeDetail()}
         ${this.renderExtRefPicker()}
       </div>
-      <function-element-dialog
+      <edit-function-dialog-e4d2f8b7
         .element=${this.dialogElement}
         .parent=${this.dialogParent}
         .elTagName=${this.dialogTagName}
@@ -1844,7 +1844,7 @@ export default class FunctionEditor9030 extends LitElement {
         .siblings=${this.dialogSiblings}
         @save=${this.handleElementDialogSave}
         @close=${this.closeElementDialog}
-      ></function-element-dialog>
+      ></edit-function-dialog-e4d2f8b7>
     </main>`;
   }
 

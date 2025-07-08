@@ -44,8 +44,8 @@ export default class EditFunctionDialog extends ScopedElementsMixin(
     return !!this.element;
   }
 
-  // Workaround for SclTextField: clears and nulls the value, ensuring the field is visually and logically reset.
-
+  // Workaround for SclTextField: clears and nulls the value,
+  // ensuring the field is visually and logically reset.
   // eslint-disable-next-line class-methods-use-this
   private clearNullableField(field: SclTextField) {
     const f = field;
@@ -183,7 +183,12 @@ export default class EditFunctionDialog extends ScopedElementsMixin(
         >
           Close
         </mwc-button>
-        <mwc-button slot="primaryAction" icon="save" @click=${this.onSave}>
+        <mwc-button
+          data-testid="add-subfunction-btn"
+          slot="primaryAction"
+          icon="save"
+          @click=${this.onSave}
+        >
           Save
         </mwc-button>
       </mwc-dialog>
@@ -200,7 +205,7 @@ export default class EditFunctionDialog extends ScopedElementsMixin(
     .dialog-content {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
     }
     .close-btn {
       --mdc-theme-primary: var(--oscd-error);

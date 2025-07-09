@@ -94,7 +94,7 @@ export default class EditFunctionDialog extends ScopedElementsMixin(
 
   private createElementNode(name: string, desc: string, type: string) {
     const doc = this.parent.ownerDocument;
-    if (!doc) return;
+    if (!doc) throw new Error('Parent element is not attached to a document.');
     const el = doc.createElement(this.elTagName!);
     if (!el) return;
     el.setAttribute('name', name);
@@ -109,7 +109,7 @@ export default class EditFunctionDialog extends ScopedElementsMixin(
   }
 
   private updateElementNode(name: string, desc: string, type: string) {
-    if (!this.element) return;
+    if (!this.element) throw new Error('No element to update.');
     const update = {
       element: this.element,
       attributes: {

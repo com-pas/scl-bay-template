@@ -819,7 +819,7 @@ export default class FunctionEditor9030 extends LitElement {
   @query('#lnlist') lnList!: SelectionList;
 
   @state()
-  showElementDialog = false;
+  showEditFunctionDialog = false;
 
   @state()
   dialogRequireUniqueName = false;
@@ -837,7 +837,7 @@ export default class FunctionEditor9030 extends LitElement {
   dialogTagName?: string;
 
   private closeElementDialog = () => {
-    this.showElementDialog = false;
+    this.showEditFunctionDialog = false;
     this.dialogElement = undefined;
     this.dialogParent = undefined;
     this.dialogTagName = undefined;
@@ -1032,7 +1032,7 @@ export default class FunctionEditor9030 extends LitElement {
     this.dialogTagName = options.tagName;
     this.dialogRequireUniqueName = !!options.requireUniqueName;
     this.dialogSiblings = options.siblings ?? [];
-    this.showElementDialog = true;
+    this.showEditFunctionDialog = true;
   }
 
   updated(changedProperties: Map<string, any>) {
@@ -1839,7 +1839,7 @@ export default class FunctionEditor9030 extends LitElement {
         .element=${this.dialogElement}
         .parent=${this.dialogParent}
         .elTagName=${this.dialogTagName}
-        .open=${this.showElementDialog}
+        .open=${this.showEditFunctionDialog}
         .requireUniqueName=${this.dialogRequireUniqueName}
         .siblings=${this.dialogSiblings}
         @save=${this.handleElementDialogSave}

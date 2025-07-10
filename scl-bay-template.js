@@ -20206,14 +20206,6 @@ i$12 `
     grid-template-columns: repeat(auto-fit, minmax(64px, auto));
   }
 `;
-function newEditWizardEvent(element, subWizard, eventInitDict) {
-    return new CustomEvent('oscd-edit-wizard-request', {
-        bubbles: true,
-        composed: true,
-        ...eventInitDict,
-        detail: { element, subWizard, ...eventInitDict === null || eventInitDict === void 0 ? void 0 : eventInitDict.detail },
-    });
-}
 function newCreateWizardEvent(parent, tagName, subWizard, eventInitDict) {
     return new CustomEvent('oscd-create-wizard-request', {
         bubbles: true,
@@ -29987,6 +29979,222 @@ function getSourceDef(paths) {
     return sourceRefs;
 }
 
+let EditFunctionDialog = class EditFunctionDialog extends ScopedElementsMixin(i$$) {
+    constructor() {
+        super(...arguments);
+        this.open = false;
+        this.requireUniqueName = false;
+        this.siblings = [];
+    }
+    get isEdit() {
+        return !!this.element;
+    }
+    // Workaround for SclTextField: clears and nulls the value,
+    // ensuring the field is visually and logically reset.
+    // eslint-disable-next-line class-methods-use-this
+    clearNullableField(field) {
+        const f = field;
+        f.value = '';
+        f.reset();
+        f.value = null;
+    }
+    resetDialog() {
+        this.nameTextField.value = '';
+        this.nameTextField.reset();
+        this.clearNullableField(this.descTextField);
+        this.clearNullableField(this.typeTextField);
+    }
+    onDialogClosed() {
+        this.resetDialog();
+        this.dispatchEvent(new CustomEvent('close'));
+    }
+    isNameUnique(name) {
+        if (!this.requireUniqueName)
+            return true;
+        return !this.siblings.some(el => {
+            var _a;
+            return el !== this.element &&
+                ((_a = el.getAttribute('name')) === null || _a === void 0 ? void 0 : _a.trim().toLowerCase()) === name.toLowerCase();
+        });
+    }
+    validateName(nameField) {
+        var _a;
+        const name = (_a = nameField.value) === null || _a === void 0 ? void 0 : _a.trim();
+        if (!name) {
+            nameField.setCustomValidity('Name is required.');
+            nameField.reportValidity();
+            return false;
+        }
+        if (!this.isNameUnique(name)) {
+            nameField.setCustomValidity('Name must be unique.');
+            nameField.reportValidity();
+            return false;
+        }
+        nameField.setCustomValidity('');
+        nameField.reportValidity();
+        return true;
+    }
+    createElementNode(name, desc, type) {
+        const doc = this.parent.ownerDocument;
+        if (!doc)
+            throw new Error('Parent element is not attached to a document.');
+        const el = doc.createElement(this.elTagName);
+        if (!el)
+            return;
+        el.setAttribute('name', name);
+        if (desc)
+            el.setAttribute('desc', desc);
+        if (type)
+            el.setAttribute('type', type);
+        const insert = {
+            parent: this.parent,
+            node: el,
+            reference: null,
+        };
+        this.dispatchEvent(newEditEvent(insert));
+    }
+    updateElementNode(name, desc, type) {
+        if (!this.element)
+            throw new Error('No element to update.');
+        const update = {
+            element: this.element,
+            attributes: {
+                name,
+                desc: desc || null,
+                type: type || null,
+            },
+        };
+        this.dispatchEvent(newEditEvent(update));
+    }
+    onSave() {
+        var _a, _b, _c, _d, _e;
+        const name = (_a = this.nameTextField.value) === null || _a === void 0 ? void 0 : _a.trim();
+        const desc = (_c = (_b = this.descTextField.value) === null || _b === void 0 ? void 0 : _b.trim()) !== null && _c !== void 0 ? _c : '';
+        const type = (_e = (_d = this.typeTextField.value) === null || _d === void 0 ? void 0 : _d.trim()) !== null && _e !== void 0 ? _e : '';
+        if (!this.validateName(this.nameTextField))
+            return;
+        if (this.isEdit && this.element) {
+            this.updateElementNode(name, desc, type);
+        }
+        else {
+            this.createElementNode(name, desc, type);
+        }
+        this.onDialogClosed();
+    }
+    render() {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+        const heading = this.isEdit
+            ? `Edit ${(_b = (_a = this.element) === null || _a === void 0 ? void 0 : _a.tagName) !== null && _b !== void 0 ? _b : 'Element'}`
+            : `Add ${(_c = this.elTagName) !== null && _c !== void 0 ? _c : 'Element'}`;
+        return x$1 `
+      <mwc-dialog
+        .open=${this.open}
+        heading=${heading}
+        @closed=${this.onDialogClosed}
+      >
+        <div class="dialog-content">
+          <scl-text-field
+            id="edit-function-name"
+            label="name"
+            required
+            .value=${(_e = (_d = this.element) === null || _d === void 0 ? void 0 : _d.getAttribute('name')) !== null && _e !== void 0 ? _e : ''}
+          ></scl-text-field>
+          <scl-text-field
+            id="edit-function-desc"
+            label="desc"
+            nullable
+            .value=${(_g = (_f = this.element) === null || _f === void 0 ? void 0 : _f.getAttribute('desc')) !== null && _g !== void 0 ? _g : null}
+            @input=${(e) => {
+            const field = e.target;
+            if (field.value === null) {
+                this.clearNullableField(field);
+            }
+        }}
+          ></scl-text-field>
+          <scl-text-field
+            id="edit-function-type"
+            label="type"
+            nullable
+            .value=${(_j = (_h = this.element) === null || _h === void 0 ? void 0 : _h.getAttribute('type')) !== null && _j !== void 0 ? _j : null}
+            @input=${(e) => {
+            const field = e.target;
+            if (field.value === null) {
+                this.clearNullableField(field);
+            }
+        }}
+          ></scl-text-field>
+        </div>
+        <mwc-button
+          class="close-btn"
+          slot="secondaryAction"
+          dialogAction="close"
+        >
+          Close
+        </mwc-button>
+        <mwc-button
+          data-testid="add-subfunction-btn"
+          slot="primaryAction"
+          icon="save"
+          @click=${this.onSave}
+        >
+          Save
+        </mwc-button>
+      </mwc-dialog>
+    `;
+    }
+};
+EditFunctionDialog.scopedElements = {
+    'scl-text-field': SclTextField,
+    'mwc-dialog': Dialog,
+    'mwc-button': Button,
+};
+EditFunctionDialog.styles = i$12 `
+    :host {
+      --md-switch-selected-hover-handle-color: #000;
+      --md-switch-selected-pressed-handle-color: #000;
+      --md-switch-selected-focus-handle-color: #000;
+      --md-sys-color-primary: var(--oscd-primary);
+    }
+    .dialog-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .close-btn {
+      --mdc-theme-primary: var(--oscd-error);
+    }
+  `;
+__decorate([
+    n$1l({ attribute: false })
+], EditFunctionDialog.prototype, "element", void 0);
+__decorate([
+    n$1l({ attribute: false })
+], EditFunctionDialog.prototype, "parent", void 0);
+__decorate([
+    n$1l()
+], EditFunctionDialog.prototype, "elTagName", void 0);
+__decorate([
+    n$1l()
+], EditFunctionDialog.prototype, "open", void 0);
+__decorate([
+    n$1l()
+], EditFunctionDialog.prototype, "requireUniqueName", void 0);
+__decorate([
+    n$1l({ attribute: false })
+], EditFunctionDialog.prototype, "siblings", void 0);
+__decorate([
+    e$1G('#edit-function-name')
+], EditFunctionDialog.prototype, "nameTextField", void 0);
+__decorate([
+    e$1G('#edit-function-desc')
+], EditFunctionDialog.prototype, "descTextField", void 0);
+__decorate([
+    e$1G('#edit-function-type')
+], EditFunctionDialog.prototype, "typeTextField", void 0);
+EditFunctionDialog = __decorate([
+    t$V('edit-function-dialog-e4d2f8b7')
+], EditFunctionDialog);
+
 const xmlnsNs$1 = 'http://www.w3.org/2000/xmlns/';
 const svgNs = 'http://www.w3.org/2000/svg';
 function compareSrcRef(a, b) {
@@ -30460,120 +30668,27 @@ let FunctionEditor9030 = class FunctionEditor9030 extends i$$ {
         this.linkProcRes = false;
         this.lNodeDetail = 'inputs';
         this.items = [];
-    }
-    openAddSubFunctionDialog(parent) {
-        this.subFunctionDialogParent = parent;
-        this.addSubFunctionDialog.show();
-    }
-    onClosing() {
-        this.subFunctionNameField.value = '';
-        this.subFunctionNameField.setCustomValidity('');
-        this.subFunctionDescField.value = '';
-        this.subFunctionTypeField.value = '';
-    }
-    isSubFunctionNameUnique(name) {
-        if (!this.subFunctionDialogParent)
-            return false;
-        return !Array.from(this.subFunctionDialogParent.children).some(el => {
-            var _a;
-            return (el.tagName === 'SubFunction' || el.tagName === 'EqSubFunction') &&
-                ((_a = el.getAttribute('name')) === null || _a === void 0 ? void 0 : _a.trim().toLowerCase()) === name.toLowerCase();
-        });
-    }
-    // eslint-disable-next-line class-methods-use-this
-    getSubFunctionTagName(parent) {
-        return parent.tagName === 'Function' || parent.tagName === 'SubFunction'
-            ? 'SubFunction'
-            : 'EqSubFunction';
-    }
-    createSubFunctionElement(parent, name, desc, type) {
-        const tagName = this.getSubFunctionTagName(parent);
-        const doc = parent.ownerDocument;
-        const subFunc = doc.createElement(tagName);
-        subFunc.setAttribute('name', name);
-        if (desc)
-            subFunc.setAttribute('desc', desc);
-        if (type)
-            subFunc.setAttribute('type', type);
-        return subFunc;
-    }
-    saveSubFunction() {
-        const name = this.subFunctionNameField.value.trim();
-        const desc = this.subFunctionDescField.value.trim();
-        const type = this.subFunctionTypeField.value.trim();
-        if (!this.subFunctionDialogParent)
-            return;
-        if (!this.isSubFunctionNameUnique(name)) {
-            this.subFunctionNameField.setCustomValidity('Name must be unique.');
-            this.subFunctionNameField.reportValidity();
-            return;
-        }
-        this.subFunctionNameField.setCustomValidity('');
-        if (!this.subFunctionNameField.reportValidity())
-            return;
-        const subFunc = this.createSubFunctionElement(this.subFunctionDialogParent, name, desc, type);
-        const insertEdit = {
-            parent: this.subFunctionDialogParent,
-            node: subFunc,
-            reference: null,
+        this.showEditFunctionDialog = false;
+        this.dialogRequireUniqueName = false;
+        this.dialogSiblings = [];
+        this.closeElementDialog = () => {
+            this.showEditFunctionDialog = false;
+            this.dialogElement = undefined;
+            this.dialogParent = undefined;
+            this.dialogTagName = undefined;
+            this.dialogRequireUniqueName = false;
+            this.dialogSiblings = [];
         };
-        this.dispatchEvent(newEditEvent(insertEdit));
-        this.addSubFunctionDialog.close();
-    }
-    renderAddSubFunctionDialog() {
-        var _a, _b;
-        return x$1 `
-      <mwc-dialog
-        id="addSubFunctionDialog"
-        heading=${`Add ${((_a = this.subFunctionDialogParent) === null || _a === void 0 ? void 0 : _a.tagName) === 'Function' ||
-            ((_b = this.subFunctionDialogParent) === null || _b === void 0 ? void 0 : _b.tagName) === 'SubFunction'
-            ? 'SubFunction'
-            : 'EqSubFunction'}`}
-        @closing=${this.onClosing}
-      >
-        <div class="subfunc-dialog-content">
-          <mwc-textfield
-            id="subfunc-name"
-            label="Name"
-            required
-          ></mwc-textfield>
-          <mwc-textfield id="subfunc-desc" label="Description"></mwc-textfield>
-          <mwc-textfield id="subfunc-type" label="Type"></mwc-textfield>
-        </div>
-        <mwc-button slot="secondaryAction" dialogAction="close">
-          Close
-        </mwc-button>
-        <mwc-button
-          slot="primaryAction"
-          icon="save"
-          @click=${this.saveSubFunction}
-        >
-          Save
-        </mwc-button>
-      </mwc-dialog>
-    `;
-    }
-    openCreateWizard(tagName) {
-        if (this.parent)
-            this.dispatchEvent(newCreateWizardEvent(this.parent, tagName));
-    }
-    openEditWizard(element) {
-        this.dispatchEvent(newEditWizardEvent(element));
+        this.handleElementDialogSave = (e) => {
+            this.dispatchEvent(newEditEvent(e.detail));
+            this.closeElementDialog();
+        };
     }
     removeFunction(func) {
         this.dispatchEvent(newEditEvent({ node: func }));
     }
     removeElement(srcRef) {
         this.dispatchEvent(newEditEvent({ node: srcRef }));
-    }
-    addFunction() {
-        var _a, _b;
-        if ((this.parent && ((_a = this.parent) === null || _a === void 0 ? void 0 : _a.tagName) === 'Bay') ||
-            ((_b = this.parent) === null || _b === void 0 ? void 0 : _b.tagName) === 'VoltageLevel') {
-            this.openCreateWizard('Function');
-            return;
-        }
-        this.openCreateWizard('EqFunction');
     }
     createNewLNodeElements() {
         var _a;
@@ -30682,6 +30797,15 @@ let FunctionEditor9030 = class FunctionEditor9030 extends i$$ {
         this.lnList.items = [];
         await this.lnList.updateComplete;
         this.lnList.items = deselectedItems;
+    }
+    openElementDialog(options) {
+        var _a;
+        this.dialogElement = options.element;
+        this.dialogParent = options.parent;
+        this.dialogTagName = options.tagName;
+        this.dialogRequireUniqueName = !!options.requireUniqueName;
+        this.dialogSiblings = (_a = options.siblings) !== null && _a !== void 0 ? _a : [];
+        this.showEditFunctionDialog = true;
     }
     updated(changedProperties) {
         // make sure to put the 6-100 on the SCL element as defined by the IEC 61850-6
@@ -31250,7 +31374,7 @@ let FunctionEditor9030 = class FunctionEditor9030 extends i$$ {
         ></span>`)}`;
     }
     // eslint-disable-next-line class-methods-use-this
-    renderSubFunction(subFunc) {
+    renderSubFunction(subFunc, parent) {
         return x$1 `<div
       class="${e$1D({
             container: true,
@@ -31259,8 +31383,30 @@ let FunctionEditor9030 = class FunctionEditor9030 extends i$$ {
     >
       <nav>
         <mwc-icon-button
+          icon="edit"
+          @click="${() => {
+            this.openElementDialog({
+                element: subFunc,
+                parent,
+                tagName: subFunc.tagName,
+                requireUniqueName: true,
+                siblings: (parent === null || parent === void 0 ? void 0 : parent.children) ? Array.from(parent === null || parent === void 0 ? void 0 : parent.children) : [],
+            });
+        }}"
+        >
+        </mwc-icon-button>
+        <mwc-icon-button
           icon="account_tree"
-          @click="${() => this.openAddSubFunctionDialog(subFunc)}"
+          @click="${() => {
+            this.openElementDialog({
+                element: undefined,
+                parent: subFunc,
+                tagName: 'SubFunction',
+                heading: 'Add SubFunction',
+                requireUniqueName: true,
+                siblings: subFunc.children ? Array.from(subFunc.children) : [],
+            });
+        }}"
         ></mwc-icon-button>
         <mwc-icon-button
           icon="delete"
@@ -31278,7 +31424,7 @@ let FunctionEditor9030 = class FunctionEditor9030 extends i$$ {
         </mwc-icon-button>
       </nav>
       ${subFunc.getAttribute('name')}
-      ${Array.from(subFunc.querySelectorAll(':scope > SubFunction, :scope > EqSubFunction')).map(subSubFunc => this.renderSubFunction(subSubFunc))}
+      ${Array.from(subFunc.querySelectorAll(':scope > SubFunction, :scope > EqSubFunction')).map(subSubFunc => this.renderSubFunction(subSubFunc, subFunc))}
       ${Array.from(subFunc.querySelectorAll(':scope > LNode')).map(lNode => this.renderLNodes(lNode))}
     </div>`;
     }
@@ -31293,12 +31439,28 @@ let FunctionEditor9030 = class FunctionEditor9030 extends i$$ {
         <nav>
           <mwc-icon-button
             icon="edit"
-            @click="${() => this.openEditWizard(this.function)}"
+            @click="${() => {
+            this.openElementDialog({
+                element: this.function,
+                parent: this.parent,
+                tagName: this.function.tagName,
+                requireUniqueName: false,
+            });
+        }}"
           >
           </mwc-icon-button>
           <mwc-icon-button
             icon="account_tree"
-            @click="${() => this.openAddSubFunctionDialog(this.function)}"
+            data-testid="add-subfunction-btn"
+            @click="${() => {
+            this.openElementDialog({
+                element: undefined,
+                parent: this.function,
+                tagName: 'SubFunction',
+                requireUniqueName: true,
+                siblings: Array.from(this.function.children).filter(el => el.tagName === 'SubFunction'),
+            });
+        }}"
           >
           </mwc-icon-button>
           <mwc-icon-button
@@ -31320,7 +31482,7 @@ let FunctionEditor9030 = class FunctionEditor9030 extends i$$ {
           </mwc-icon-button>
         </nav>
         ${this.function.getAttribute('name')}
-        ${Array.from(this.function.querySelectorAll(':scope > SubFunction, :scope > EqSubFunction')).map(subFunc => this.renderSubFunction(subFunc))}
+        ${Array.from(this.function.querySelectorAll(':scope > SubFunction, :scope > EqSubFunction')).map(subFunc => this.renderSubFunction(subFunc, this.function))}
         ${Array.from(this.function.querySelectorAll(':scope > LNode')).map(lNode => this.renderLNodes(lNode))}
       </div>
       ${this.renderOutputs()}`;
@@ -31336,7 +31498,16 @@ let FunctionEditor9030 = class FunctionEditor9030 extends i$$ {
         ${this.renderLNodeTypePicker()} ${this.renderLNodeDetail()}
         ${this.renderExtRefPicker()}
       </div>
-      ${this.renderAddSubFunctionDialog()}
+      <edit-function-dialog-e4d2f8b7
+        .element=${this.dialogElement}
+        .parent=${this.dialogParent}
+        .elTagName=${this.dialogTagName}
+        .open=${this.showEditFunctionDialog}
+        .requireUniqueName=${this.dialogRequireUniqueName}
+        .siblings=${this.dialogSiblings}
+        @save=${this.handleElementDialogSave}
+        @close=${this.closeElementDialog}
+      ></edit-function-dialog-e4d2f8b7>
     </main>`;
     }
 };
@@ -31468,12 +31639,6 @@ FunctionEditor9030.styles = i$12 `
 
     .content.prores > * {
       margin: 8px 10px 16px;
-    }
-
-    .subfunc-dialog-content {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
     }
 
     * {
@@ -31610,20 +31775,23 @@ __decorate([
     e$1G('#lnlist')
 ], FunctionEditor9030.prototype, "lnList", void 0);
 __decorate([
-    e$1G('#addSubFunctionDialog')
-], FunctionEditor9030.prototype, "addSubFunctionDialog", void 0);
-__decorate([
-    e$1G('#subfunc-name')
-], FunctionEditor9030.prototype, "subFunctionNameField", void 0);
-__decorate([
-    e$1G('#subfunc-desc')
-], FunctionEditor9030.prototype, "subFunctionDescField", void 0);
-__decorate([
-    e$1G('#subfunc-type')
-], FunctionEditor9030.prototype, "subFunctionTypeField", void 0);
+    r$O()
+], FunctionEditor9030.prototype, "showEditFunctionDialog", void 0);
 __decorate([
     r$O()
-], FunctionEditor9030.prototype, "subFunctionDialogParent", void 0);
+], FunctionEditor9030.prototype, "dialogRequireUniqueName", void 0);
+__decorate([
+    r$O()
+], FunctionEditor9030.prototype, "dialogSiblings", void 0);
+__decorate([
+    r$O()
+], FunctionEditor9030.prototype, "dialogElement", void 0);
+__decorate([
+    r$O()
+], FunctionEditor9030.prototype, "dialogParent", void 0);
+__decorate([
+    r$O()
+], FunctionEditor9030.prototype, "dialogTagName", void 0);
 FunctionEditor9030 = __decorate([
     t$V('compas-function-editor-a1b2c3d4')
 ], FunctionEditor9030);
